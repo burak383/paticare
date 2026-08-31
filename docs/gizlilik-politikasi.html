@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PatiCare Gizlilik Politikası</title>
+<meta name="description" content="PatiCare KVKK Aydınlatma Metni — hangi verilerin toplandığı, neden toplandığı ve haklarınız.">
+<style>
+  :root {
+    --bg: #F7FBF8;
+    --fg: #17352C;
+    --primary: #087F5B;
+    --primary-fg: #FFFFFF;
+    --muted: #EAF3EE;
+    --muted-fg: #587168;
+    --border: #CFE1D8;
+    --card: #FFFFFF;
+    --destructive: #C93838;
+    --destructive-bg: #FBEAEA;
+    --ring: rgba(8, 127, 91, 0.35);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1C17;
+      --fg: #E7F3ED;
+      --primary: #3FCB9B;
+      --primary-fg: #062E22;
+      --muted: #16281F;
+      --muted-fg: #9BB8AC;
+      --border: #26402F;
+      --card: #142720;
+      --destructive: #F0817A;
+      --destructive-bg: #2C1615;
+      --ring: rgba(63, 203, 155, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E1C17;
+    --fg: #E7F3ED;
+    --primary: #3FCB9B;
+    --primary-fg: #062E22;
+    --muted: #16281F;
+    --muted-fg: #9BB8AC;
+    --border: #26402F;
+    --card: #142720;
+    --destructive: #F0817A;
+    --destructive-bg: #2C1615;
+    --ring: rgba(63, 203, 155, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Nunito Sans', 'Manrope', sans-serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  a { color: var(--primary); }
+
+  .wrap {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: var(--primary-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4.5vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+
+  .lede {
+    color: var(--muted-fg);
+    font-size: 16px;
+    max-width: 56ch;
+    margin-bottom: 8px;
+  }
+
+  .reviewer-note {
+    font-size: 13px;
+    color: var(--muted-fg);
+    font-style: italic;
+    margin-top: 18px;
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+  }
+
+  .draft-notice {
+    background: var(--destructive-bg);
+    border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
+    color: var(--destructive);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 24px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .draft-notice span.mark { font-size: 16px; line-height: 1; flex-shrink: 0; }
+  .draft-notice p { margin: 0; font-weight: 500; }
+  .draft-notice strong { font-weight: 800; }
+
+  section {
+    margin-top: 40px;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+  }
+
+  .card p {
+    color: var(--muted-fg);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .card p + p { margin-top: 10px; }
+
+  .card strong { color: var(--fg); }
+
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .toc a {
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    background: var(--muted);
+    color: var(--fg);
+    padding: 7px 12px;
+    border-radius: 999px;
+  }
+
+  .toc a:hover { color: var(--primary); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--primary);
+    color: var(--primary-fg);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 18px;
+    border-radius: 10px;
+    width: fit-content;
+    transition: opacity 0.15s ease;
+  }
+
+  .btn:hover { opacity: 0.88; }
+  .btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--muted-fg);
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark">🐾</div>
+    <div class="brand-name">PatiCare</div>
+  </div>
+
+  <div class="eyebrow">Gizlilik ve Veri İşleme</div>
+  <h1>Gizlilik Politikası</h1>
+  <p class="lede">
+    PatiCare KVKK Aydınlatma Metni — hangi verilerini topluyoruz, neden
+    topluyoruz ve verilerin üzerindeki hakların neler.
+  </p>
+  <p class="reviewer-note">
+    For reviewers: this is PatiCare's privacy policy, describing what
+    personal data the app collects, why, and how users can exercise their
+    rights over it.
+  </p>
+
+  <div class="draft-notice">
+    <span class="mark">⚠️</span>
+    <p>
+      <strong>Bu metin bir TASLAKTIR</strong> — henüz bir avukat tarafından
+      incelenip 6698 sayılı Kişisel Verilerin Korunması Kanunu'na (KVKK)
+      tam uyumlu hale getirilmedi. Uygulama içinde de aynı uyarıyla
+      gösteriliyor. Gerçek kullanıcı verisi işlenmeye devam ederken, bu
+      metnin nihai/onaylı sürümle değiştirilmesi planlanıyor.
+    </p>
+  </div>
+
+  <nav class="toc">
+    <a href="#veri-sorumlusu">1. Veri sorumlusu</a>
+    <a href="#islenen-veriler">2. İşlenen veriler</a>
+    <a href="#amaclar">3. İşleme amaçları</a>
+    <a href="#aktarim">4. Aktarım</a>
+    <a href="#haklar">5. Hakların</a>
+    <a href="#iletisim">6. İletişim</a>
+  </nav>
+
+  <section id="veri-sorumlusu">
+    <h2>1. Veri sorumlusu</h2>
+    <div class="card">
+      <p>PatiCare uygulamasını işleten geliştirici, kişisel verilerinin işlenmesi bakımından veri sorumlusudur.</p>
+    </div>
+  </section>
+
+  <section id="islenen-veriler">
+    <h2>2. İşlenen kişisel veriler</h2>
+    <div class="card">
+      <p>
+        Hesap bilgilerin (e-posta, ad), evcil hayvan profillerin ve
+        fotoğrafları, bakım/hatırlatıcı kayıtların, aşı ve sağlık
+        kayıtların, ürün tarama geçmişin, fiyat notların, bildirim
+        tercihlerin ve — izin verirsen — cihazının push bildirim token'ı.
+      </p>
+    </div>
+  </section>
+
+  <section id="amaclar">
+    <h2>3. İşleme amaçları</h2>
+    <div class="card">
+      <p>
+        Hesabını oluşturmak ve doğrulamak, evcil hayvan bakım kayıtlarını
+        senin için saklamak, hatırlatıcı bildirimleri göndermek,
+        uygulamayı iyileştirmek.
+      </p>
+    </div>
+  </section>
+
+  <section id="aktarim">
+    <h2>4. Aktarım</h2>
+    <div class="card">
+      <p>
+        Verilerin, uygulamanın çalışması için zorunlu olan servis
+        sağlayıcılar (ör. bildirim altyapısı, e-posta gönderim servisi)
+        dışında üçüncü taraflarla paylaşılmaz ya da satılmaz.
+      </p>
+    </div>
+  </section>
+
+  <section id="haklar">
+    <h2>5. Hakların</h2>
+    <div class="card">
+      <p>
+        KVKK'nın 11. maddesi kapsamında verilerinin işlenip işlenmediğini
+        öğrenme, düzeltilmesini veya silinmesini isteme haklarına
+        sahipsin.
+      </p>
+      <p>
+        Uygulama içinden <strong>Profil → Gizlilik ve verilerim</strong>
+        bölümünden, uygulamaya erişimin yoksa
+        <a href="./hesap-silme.html">hesap silme sayfamızdan</a>
+        hesabını ve tüm verilerini silebilirsin.
+      </p>
+    </div>
+  </section>
+
+  <section id="iletisim">
+    <h2>6. İletişim</h2>
+    <div class="card">
+      <p>
+        Gizlilikle ilgili sorular, talepler veya haklarını kullanmak için
+        bize aşağıdaki adresten ulaşabilirsin.
+      </p>
+      <a class="btn" style="margin-top: 14px;" href="mailto:seolen8@gmail.com?subject=PatiCare%20Gizlilik%20Talebi">
+        seolen8@gmail.com adresine yaz
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <span>PatiCare</span>
+    <span>Sorular için: <a href="mailto:seolen8@gmail.com">seolen8@gmail.com</a></span>
+  </footer>
+</div>
+</body>
+</html>
