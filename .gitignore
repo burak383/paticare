@@ -1,0 +1,8 @@
+# Root-level ignores. Package-specific rules live in backend/.gitignore and
+# mobile/.gitignore — this file only covers things at the repo root.
+.DS_Store
+*.log
+
+# Working notes / scratch files generated during development — not part of
+# the shipped app or backend, no reason to carry them in the repo history.
+scratch/

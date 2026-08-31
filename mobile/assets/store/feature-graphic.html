@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@800&family=Manrope:wght@500&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: 'Nunito Sans';
+    src: local('Nunito Sans');
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1024px;
+    height: 500px;
+    overflow: hidden;
+    background: #087F5B;
+    font-family: 'Manrope', sans-serif;
+  }
+  .stage {
+    position: relative;
+    width: 1024px;
+    height: 500px;
+    background: #087F5B;
+  }
+  /* Subtle brand-tinted depth, not a hero gradient — a single soft highlight
+     bottom-right so the flat green field doesn't read as inert. */
+  .stage::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 900px 500px at 88% 112%, rgba(255,255,255,0.10), transparent 60%);
+  }
+  .paw {
+    position: absolute;
+    left: 108px;
+    top: 150px;
+    width: 300px;
+    height: 200px;
+  }
+  .toe {
+    position: absolute;
+    background: #F7FBF8;
+    border-radius: 50%;
+  }
+  .pad {
+    position: absolute;
+    background: #F7FBF8;
+    border-radius: 50%;
+    width: 157px;
+    height: 125px;
+    left: 71px;
+    top: 74px;
+  }
+  .content {
+    position: absolute;
+    left: 424px;
+    top: 0;
+    right: 56px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .wordmark {
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 92px;
+    letter-spacing: -0.02em;
+    color: #F7FBF8;
+    line-height: 1;
+  }
+  .tagline {
+    margin-top: 22px;
+    font-weight: 500;
+    font-size: 30px;
+    color: #DCEEFF;
+    letter-spacing: -0.005em;
+  }
+  .rule {
+    margin-top: 34px;
+    width: 88px;
+    height: 5px;
+    border-radius: 3px;
+    background: #E56A2C;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="paw">
+      <div class="toe" style="width:59px; height:59px; left:0; top:12px;"></div>
+      <div class="toe" style="width:77px; height:77px; left:71px; top:0;"></div>
+      <div class="toe" style="width:77px; height:77px; left:153px; top:0;"></div>
+      <div class="toe" style="width:59px; height:59px; left:241px; top:12px;"></div>
+      <div class="pad"></div>
+    </div>
+    <div class="content">
+      <div class="wordmark">PatiCare</div>
+      <div class="tagline">Evcil dostunun bakım asistanı</div>
+      <div class="rule"></div>
+    </div>
+  </div>
+</body>
+</html>

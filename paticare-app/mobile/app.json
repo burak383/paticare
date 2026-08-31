@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "PatiCare",
+    "slug": "paticare",
+    "scheme": "paticare",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.paticare.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
+      }
+    },
+    "android": {
+      "package": "com.paticare.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#F7FBF8"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PatiCare, evcil hayvanının profil fotoğrafını seçmen için fotoğraflarına erişim ister."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#087F5B"
+        }
+      ]
+    ]
+  }
+}

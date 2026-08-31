@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PatiCare Hesap Silme</title>
+<meta name="description" content="PatiCare hesabını ve hesabına bağlı tüm verileri kalıcı olarak silme talimatları.">
+<style>
+  :root {
+    --bg: #F7FBF8;
+    --fg: #17352C;
+    --primary: #087F5B;
+    --primary-fg: #FFFFFF;
+    --muted: #EAF3EE;
+    --muted-fg: #587168;
+    --border: #CFE1D8;
+    --card: #FFFFFF;
+    --destructive: #C93838;
+    --destructive-bg: #FBEAEA;
+    --ring: rgba(8, 127, 91, 0.35);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1C17;
+      --fg: #E7F3ED;
+      --primary: #3FCB9B;
+      --primary-fg: #062E22;
+      --muted: #16281F;
+      --muted-fg: #9BB8AC;
+      --border: #26402F;
+      --card: #142720;
+      --destructive: #F0817A;
+      --destructive-bg: #2C1615;
+      --ring: rgba(63, 203, 155, 0.4);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0E1C17;
+    --fg: #E7F3ED;
+    --primary: #3FCB9B;
+    --primary-fg: #062E22;
+    --muted: #16281F;
+    --muted-fg: #9BB8AC;
+    --border: #26402F;
+    --card: #142720;
+    --destructive: #F0817A;
+    --destructive-bg: #2C1615;
+    --ring: rgba(63, 203, 155, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Nunito Sans', 'Manrope', sans-serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  a { color: var(--primary); }
+
+  .wrap {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: var(--primary-fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4.5vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+
+  .lede {
+    color: var(--muted-fg);
+    font-size: 16px;
+    max-width: 56ch;
+    margin-bottom: 8px;
+  }
+
+  .reviewer-note {
+    font-size: 13px;
+    color: var(--muted-fg);
+    font-style: italic;
+    margin-top: 18px;
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+  }
+
+  section {
+    margin-top: 40px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+
+  .methods {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 560px) {
+    .methods { grid-template-columns: 1fr; }
+  }
+
+  .method-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .method-step {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+
+  .method-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .method-card p {
+    color: var(--muted-fg);
+    font-size: 14px;
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  .path {
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    background: var(--muted);
+    color: var(--fg);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--primary);
+    color: var(--primary-fg);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 18px;
+    border-radius: 10px;
+    width: fit-content;
+    transition: opacity 0.15s ease;
+  }
+
+  .btn:hover { opacity: 0.88; }
+  .btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+  .data-list {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 4px 22px;
+  }
+
+  .data-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: baseline;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .data-row:last-child { border-bottom: none; }
+
+  .data-row dt {
+    font-weight: 700;
+    flex-shrink: 0;
+    width: 40%;
+  }
+
+  .data-row dd {
+    margin: 0;
+    color: var(--muted-fg);
+    text-align: right;
+  }
+
+  .notice {
+    background: var(--destructive-bg);
+    border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
+    color: var(--destructive);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 20px;
+  }
+
+  .timeline {
+    color: var(--muted-fg);
+    font-size: 14px;
+  }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--muted-fg);
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark">🐾</div>
+    <div class="brand-name">PatiCare</div>
+  </div>
+
+  <div class="eyebrow">Hesap ve Veri Silme</div>
+  <h1>Hesabını ve verilerini sil</h1>
+  <p class="lede">
+    PatiCare hesabını ve hesabına bağlı tüm verileri, uygulamayı telefonunda
+    tutmasan veya silmiş olsan bile, aşağıdaki iki yoldan biriyle kalıcı olarak
+    silebilirsin.
+  </p>
+  <p class="reviewer-note">
+    For reviewers: this page lets PatiCare users request permanent deletion of
+    their account and associated data, independently of the app itself.
+  </p>
+
+  <section>
+    <h2>Nasıl silinir</h2>
+    <div class="methods">
+      <div class="method-card">
+        <span class="method-step">Uygulama içinden</span>
+        <h3>Anında sil</h3>
+        <p>Hesabına giriş yapabiliyorsan en hızlı yol budur — talebin anda işlenir.</p>
+        <span class="path">Profil → Hesap ve gizlilik → Hesabımı ve tüm verilerimi sil</span>
+      </div>
+      <div class="method-card">
+        <span class="method-step">Bu sayfadan</span>
+        <h3>Uygulamaya erişimin yoksa</h3>
+        <p>Uygulamayı sildiysen veya hesabına giriş yapamıyorsan, kayıtlı e-posta adresinden bize yaz.</p>
+        <a class="btn" href="mailto:seolen8@gmail.com?subject=PatiCare%20Hesap%20Silme%20Talebi&body=Merhaba%2C%0A%0APatiCare%20hesab%C4%B1m%C4%B1n%20ve%20hesab%C4%B1ma%20ait%20t%C3%BCm%20verilerin%20silinmesini%20talep%20ediyorum.%0A%0AHesaba%20kay%C4%B1tl%C4%B1%20e-posta%20adresi%3A%20%0A">
+          seolen8@gmail.com adresine yaz
+        </a>
+      </div>
+    </div>
+    <p class="timeline">
+      E-posta ile gelen talepler, 6698 sayılı KVKK'nın öngördüğü azami süre olan
+      <strong>30 gün</strong> içinde işleme alınır.
+    </p>
+  </section>
+
+  <section>
+    <h2>Ne siliniyor</h2>
+    <dl class="data-list">
+      <div class="data-row">
+        <dt>Hesap bilgileri</dt>
+        <dd>Ad, e-posta adresi, şifre</dd>
+      </div>
+      <div class="data-row">
+        <dt>Evcil hayvan profilleri</dt>
+        <dd>Profil fotoğrafları dahil</dd>
+      </div>
+      <div class="data-row">
+        <dt>Bakım geçmişi</dt>
+        <dd>İlaç, aşı ve sağlık kayıtları, veteriner notları</dd>
+      </div>
+      <div class="data-row">
+        <dt>Ürün tarama geçmişi</dt>
+        <dd>Taranan ürünler ve fiyat notları</dd>
+      </div>
+      <div class="data-row">
+        <dt>Tercihler</dt>
+        <dd>Bildirim, hatırlatma ve dil ayarları</dd>
+      </div>
+    </dl>
+    <p class="notice">Bu işlem kalıcıdır ve geri alınamaz.</p>
+  </section>
+
+  <section>
+    <h2>Sıkça sorulanlar</h2>
+    <div class="methods" style="grid-template-columns: 1fr;">
+      <div class="method-card">
+        <h3>Herhangi bir veri saklanıyor mu?</h3>
+        <p>
+          Yürürlükteki mevzuatın gerektirdiği durumlar dışında (örneğin faturalama
+          kayıtlarının yasal saklama süresi boyunca tutulması), silme talebinden
+          sonra hiçbir veri elde tutulmaz.
+        </p>
+      </div>
+      <div class="method-card">
+        <h3>Talebimi kimlik doğrulaması olmadan mı işliyorsunuz?</h3>
+        <p>
+          E-posta talebinde, hesaba kayıtlı olduğunu doğrulamak için kayıtlı
+          e-posta adresini ve mümkünse hesap içindeki bir evcil hayvan adı gibi
+          bir detayı ekle — bu, yanlış hesabın silinmesini önler.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>PatiCare</span>
+    <span>Sorular için: <a href="mailto:seolen8@gmail.com">seolen8@gmail.com</a></span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# Render "Blueprint" — repoyu Render'a bağladığında bu dosyayı otomatik
+# bulup servisi buradaki ayarlarla kurmayı teklif eder (Dashboard'da da
+# elle aynısını yapabilirsin, ama bu dosya varken en hızlısı bu).
+#
+# ÖNEMLİ: JSON dosya tabanlı veritabanı (backend/src/db.js) kalıcı bir disk
+# gerektirir. Render'ın ücretsiz (Free) planında kalıcı disk YOK — her
+# redeploy'da (ve düzenli aralıklarla uykuya geçip uyanmada) veri sıfırlanır.
+# Aşağıdaki `disk` bloğu için en az "Starter" plana (aylık ~7$) geçmen gerekir.
+# Render Dashboard'da servisi oluşturduktan sonra planı Starter'a yükselt.
+services:
+  - type: web
+    name: paticare-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter # kalıcı disk için Free yeterli değil — bkz. yukarıdaki not
+    region: frankfurt # Türkiye'ye en yakın Render bölgesi; istersen değiştir
+    healthCheckPath: /api/health-check
+    disk:
+      name: paticare-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /data
+      # Aşağıdakiler `sync: false` — yani Render bunları senden Dashboard'da
+      # ayrıca soracak, bu dosyaya (ve dolayısıyla git'e) hiçbir gizli değer
+      # yazılmıyor.
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: GOOGLE_VISION_API_KEY
+        sync: false
+      - key: REVENUECAT_WEBHOOK_AUTH_HEADER
+        sync: false

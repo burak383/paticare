@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "PatiCare",
+    "slug": "paticare",
+    "owner": "Burak38",
+    "scheme": "paticare",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#F7FBF8",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.paticare.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
+      }
+    },
+    "android": {
+      "package": "com.paticare.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F7FBF8"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PatiCare, evcil hayvanının profil fotoğrafını seçmen için fotoğraflarına erişim ister.",
+          "cameraPermission": "PatiCare, ürün etiketini tarayabilmen için kameranıza erişim ister.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#087F5B",
+          "sounds": [
+            "./assets/sounds/gentle-paw.wav",
+            "./assets/sounds/bell.wav",
+            "./assets/sounds/ping.wav"
+          ]
+        }
+      ]
+    ]
+  }
+}
