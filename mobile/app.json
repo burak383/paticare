@@ -4,7 +4,7 @@
     "slug": "paticare",
     "owner": "burak38",
     "scheme": "paticare",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": ["**/*"],
@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "app.paticare.mobile",
-      "versionCode": 3,
+      "versionCode": 10,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7FBF8"
