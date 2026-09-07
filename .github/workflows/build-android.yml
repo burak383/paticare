@@ -45,7 +45,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Native Android projesini oluştur (expo prebuild)
         working-directory: mobile
