@@ -1,0 +1,79 @@
+name: Android Release (imzalı AAB) derle
+
+# Play Store'a yüklenebilir, GERÇEK imzalı bir Android App Bundle (.aab)
+# üretir. build-android.yml'deki debug APK'nın aksine, bu senin kendi
+# release keystore'unla (repo secrets'a eklediğin) imzalanır — Play
+# Console'un kabul ettiği tek imza türü budur.
+#
+# Çalıştırmadan önce repo → Settings → Secrets and variables → Actions'a şu
+# 4 repository secret'ını eklemiş olman gerekiyor (README'deki "Android
+# release imzalama" bölümünde tam adımlar var):
+#   ANDROID_KEYSTORE_BASE64
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+#
+# Elle tetiklenir (Actions → "Android Release (imzalı AAB) derle" →
+# "Run workflow") — her push'ta otomatik çalışmaz, çünkü her yeni sürümün
+# versionCode'unun elle artırılması gerekiyor (bkz. README).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Render'daki backend'in gerçek adresi belli olunca güncelle.
+      EXPO_PUBLIC_API_URL: https://REPLACE-WITH-RENDER-URL.onrender.com/api
+
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Bağımlılıkları kur
+        working-directory: mobile
+        run: npm ci
+
+      - name: JDK 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Native Android projesini oluştur (expo prebuild)
+        working-directory: mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Release keystore'unu geri yükle
+        working-directory: mobile/android/app
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: build.gradle'a release imzalama yapılandırmasını ekle
+        working-directory: mobile
+        run: python3 ../.github/scripts/patch_release_signing.py
+
+      - name: gradlew'i çalıştırılabilir yap
+        run: chmod +x mobile/android/gradlew
+
+      - name: İmzalı AAB derle
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --no-daemon
+
+      - name: AAB'yi Actions artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: paticare-release-aab
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
