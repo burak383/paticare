@@ -261,7 +261,7 @@ describe('scheduleCareItemReminder and sendTestNotification — sound preference
 
     expect(sent).toBe(true);
     expect(mockScheduleNotificationAsync).toHaveBeenCalledWith({
-      content: expect.objectContaining({ sound: 'gentle-paw.wav' }),
+      content: expect.objectContaining({ sound: 'gentle_paw.wav' }),
       trigger: null,
     });
   });

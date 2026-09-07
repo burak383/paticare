@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Generates the three custom notification sound files referenced by
 mobile/app.json's expo-notifications plugin config and mobile/src/notifications.ts's
-SOUND_FILES map (gentle-paw.wav, bell.wav, ping.wav).
+SOUND_FILES map (gentle_paw.wav, bell.wav, ping.wav).
+
+Filenames use underscores, not hyphens — Android resource names (which
+expo-notifications derives straight from the filename at prebuild time) may
+only contain lowercase a-z, 0-9, and underscore; a hyphen fails the native
+build with "Resource name ... is not valid."
 
 These are synthesized tones (no external audio assets/network calls), kept
 deliberately short (well under a second) since a notification sound only
@@ -66,7 +71,7 @@ gentle_paw = (
     + silence(0.05)
     + sine_note(196, 0.14, amplitude=0.3, harmonics=[(1, 1.0), (2, 0.25)])
 )
-write_wav('gentle-paw.wav', gentle_paw)
+write_wav('gentle_paw.wav', gentle_paw)
 
 # "Zil" — a classic bell/chime: fundamental plus a few inharmonic-ish
 # overtones and a longer decay, evoking a small doorbell/chime.
@@ -80,4 +85,4 @@ write_wav('bell.wav', bell)
 ping = sine_note(1318, 0.18, amplitude=0.45, harmonics=[(1, 1.0), (3, 0.15)])
 write_wav('ping.wav', ping)
 
-print('Wrote gentle-paw.wav, bell.wav, ping.wav')
+print('Wrote gentle_paw.wav, bell.wav, ping.wav')

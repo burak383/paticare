@@ -2,7 +2,7 @@
   "expo": {
     "name": "PatiCare",
     "slug": "paticare",
-    "owner": "Burak38",
+    "owner": "burak38",
     "scheme": "paticare",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -51,7 +51,7 @@
         {
           "color": "#087F5B",
           "sounds": [
-            "./assets/sounds/gentle-paw.wav",
+            "./assets/sounds/gentle_paw.wav",
             "./assets/sounds/bell.wav",
             "./assets/sounds/ping.wav"
           ]

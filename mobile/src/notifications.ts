@@ -52,7 +52,7 @@ export type SoundPreference = 'Varsayılan' | 'Nazik pati sesi' | 'Zil' | 'Ping'
 // system default regardless of what's passed here. These only take effect in
 // a real EAS dev/production build (see README.md's "Bilinen sınırlar").
 const SOUND_FILES: Partial<Record<SoundPreference, string>> = {
-  'Nazik pati sesi': 'gentle-paw.wav',
+  'Nazik pati sesi': 'gentle_paw.wav',
   Zil: 'bell.wav',
   Ping: 'ping.wav',
 };
