@@ -279,12 +279,69 @@ Kullanımı:
    **Artifacts** altında `paticare-debug-apk` görünür, indirip telefonuna
    kurabilirsin (Android'de "bilinmeyen kaynaklardan yükleme" izni gerekir).
 3. ⚠️ Bu **debug** imzalı bir APK — telefonunda test etmek ve ekran
-   görüntüsü almak için yeterli, ama Play Store'a **yüklenemez**. Gerçek
-   mağaza gönderimi hâlâ `eas build --profile production` (EAS'ın yönettiği
-   release keystore'uyla) gerektiriyor.
+   görüntüsü almak için yeterli, ama Play Store'a **yüklenemez**
+   ("Yüklenen tüm paketler imzalanmış olmalıdır" hatası tam olarak bunu
+   söylüyor). Gerçek mağaza gönderimi için aşağıdaki "Android release
+   imzalama" bölümündeki ayrı workflow'u kullan.
 4. Workflow dosyasındaki `EXPO_PUBLIC_API_URL` da `eas.json`'daki gibi bir
    yer tutucu — Render deploy'u bitince gerçek adresle güncellenmesi
    gerekiyor.
+
+## Android release imzalama (GitHub Actions ile, kendi keystore'unla)
+
+`build-android.yml`'in ürettiği debug APK Play Store'a yüklenemez —
+Google, yalnızca gerçek bir **release keystore**'la imzalanmış paketleri
+kabul ediyor. EAS'ın bulut servisini kullanmak istemediğin için (hesap
+kurulumu/kota bağımlılığı olmadan devam etmek istedin), bunun yerine kendi
+release keystore'unu senin için oluşturdum ve GitHub Actions'ta onunla
+imzalayan ayrı bir workflow (`.github/workflows/build-android-release.yml`
++ `.github/scripts/patch_release_signing.py`) hazırladım.
+
+Bu iki dosyayı da doğrudan PC'ne yazamadım (GitHub Actions dosyalarına
+uzaktan yazma güvenlik amacıyla engelleniyor) — sohbette ayrıca verdiğim
+içerikle kendin oluşturman gerekiyor. Keystore dosyasının kendisini ve
+GitHub Secrets'a gireceğin değerleri de ayrıca dosya olarak gönderdim.
+
+**Neden ayrı bir script dosyası (`patch_release_signing.py`)?** Bu proje
+"managed" Expo workflow'u kullanıyor — yani `android/` klasörü repoda
+tutulmuyor, her derlemede `expo prebuild` tarafından sıfırdan üretiliyor.
+Expo'nun ürettiği varsayılan `build.gradle`, release build tipini de debug
+keystore'uyla imzalayacak şekilde geliyor (`signingConfig
+signingConfigs.debug`) — bu yüzden `assembleDebug` çalışıyordu ama Play
+reddediyordu. Script, her `expo prebuild`'den hemen sonra bu dosyayı
+düzenleyip release keystore'unu kullanan ayrı bir `signingConfigs.release`
+bloğu ekliyor; şifreler dosyaya yazılmıyor, CI ortam değişkenlerinden
+(`System.getenv(...)`) okunuyor.
+
+**Kurulum (bir kere yapman yeterli):**
+1. Sana ayrıca gönderdiğim `release.keystore`, `release.keystore.base64` ve
+   `secrets-github.txt` dosyalarını **git deposunun dışında**, güvenli bir
+   yere kaydet (ör. bir parola yöneticisi) — bunları asla repoya ekleme.
+2. GitHub'da repo → **Settings → Secrets and variables → Actions** →
+   **"New repository secret"** ile `secrets-github.txt`'teki 4 değeri tek
+   tek gir: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+   `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+3. `secrets-github.txt`'in yerel kopyasını (secret'ları girdikten sonra)
+   sil veya güvenli depolamana taşı — Downloads klasöründe bırakma.
+
+**Çalıştırmak için:** repo → **Actions** → "Android Release (imzalı AAB)
+derle" → **"Run workflow"**. Bitince Artifacts altında `paticare-release-aab`
+(bir `.aab` dosyası) görünür — bu, Play Console'a doğrudan yükleyebileceğin
+dosya.
+
+⚠️ Bu workflow her push'ta değil, yalnızca elle tetiklendiğinde çalışır —
+her yeni sürüm yüklemesi Play'de benzersiz bir `versionCode` gerektiriyor;
+ilk sürüm için `app.json`'da bir şey değiştirmene gerek yok (varsayılan 1),
+ama bir sonraki sürümde `mobile/app.json`'a `"android": { "versionCode": 2,
+... }` eklemen (ve her seferinde artırman) gerekecek.
+
+⚠️ **Bu keystore'u kaybetme.** Play App Signing'e kayıtlıysan (Google artık
+yeni uygulamalarda bunu varsayılan/zorunlu yapıyor) bu senin "upload key"'in
+— kaybedersen Google'ın kimlik doğrulamalı "upload key reset" sürecinden
+geçmen gerekir, günler sürebilir. Kayıp değilse (Play App Signing'e
+kayıtlı değilsen) kaybı geri dönüşü olmayan bir durum: bu uygulamayı bir
+daha asla güncelleyemezsin, yeni bir paket adıyla baştan yayınlaman
+gerekir.
 
 ## Genel belgeleri GitHub Pages'te yayınlamak
 

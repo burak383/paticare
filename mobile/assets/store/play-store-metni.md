@@ -56,6 +56,28 @@ Verilerin sana ait: hesabını ve tüm verilerini istediğin an, uygulama
 içinden kalıcı olarak silebilirsin.
 ```
 
+## Sürüm notları (What's new) — v1.0.0, sınır 500 karakter
+
+Play Console'da her sürüm yüklemesinde (kapalı test dahil) istenen ayrı bir alan —
+"Mağaza listesi" metninden farklı, "bu sürümde ne değişti" metni. İlk sürüm
+olduğu için bir değişiklik listesi değil, kısa bir karşılama/özet:
+
+```
+PatiCare'e hoş geldin! İlk sürümde neler var:
+
+• İlaç, aşı ve bakım için tek seferlik veya tekrarlayan hatırlatıcılar
+• Takvim ve günlük bakım planı
+• Sağlık karnesi: aşı geçmişi, sağlık durumları, veteriner notları
+• Ürün tarama ve güvenlik kontrolü
+• Birden fazla evcil hayvan, ayrı profil ve geçmiş
+• Hesap oluşturmadan misafir modunda deneme
+```
+(≈340 karakter)
+
+Bir sonraki sürümlerde bu alanı gerçekten o sürümde değişenlerle
+(ör. "Bu sürümde: X hatası düzeltildi, Y özelliği eklendi") güncellemek
+gerekiyor — aynı karşılama metnini tekrar tekrar kullanma.
+
 ## Uygulama adı
 
 PatiCare (mevcut isim korunuyor — değişiklik gerekmiyor)

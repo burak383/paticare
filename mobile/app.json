@@ -16,13 +16,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.paticare.app",
+      "bundleIdentifier": "app.paticare.mobile",
       "infoPlist": {
         "NSFaceIDUsageDescription": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
       }
     },
     "android": {
-      "package": "com.paticare.app",
+      "package": "app.paticare.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7FBF8"

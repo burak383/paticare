@@ -18,13 +18,13 @@ const TRIAL_DAYS = 7;
 // eşleşmeli — App Store Connect / Google Play Console'da da bu kimliklerle
 // abonelik ürünleri oluşturulmuş olmalı.
 const PLANS = {
-  monthly: { id: 'monthly', label: 'Aylık', priceLabel: '₺49,99/ay', productId: 'com.paticare.app.plus.monthly' },
+  monthly: { id: 'monthly', label: 'Aylık', priceLabel: '₺49,99/ay', productId: 'app.paticare.mobile.plus.monthly' },
   yearly: {
     id: 'yearly',
     label: 'Yıllık',
     priceLabel: '₺399,99/yıl',
     badgeLabel: '%33 tasarruf',
-    productId: 'com.paticare.app.plus.yearly',
+    productId: 'app.paticare.mobile.plus.yearly',
   },
 };
 

@@ -33,8 +33,8 @@ export const PLUS_ENTITLEMENT_ID = 'plus';
 // ürünleri oluşturulmalı — backend/src/subscription.js'teki PLANS[*].productId
 // ile de eşleşiyor olmalı (bkz. o dosyadaki yorum).
 export const PLUS_PRODUCT_IDS = {
-  monthly: 'com.paticare.app.plus.monthly',
-  yearly: 'com.paticare.app.plus.yearly',
+  monthly: 'app.paticare.mobile.plus.monthly',
+  yearly: 'app.paticare.mobile.plus.yearly',
 } as const;
 
 let configured = false;
