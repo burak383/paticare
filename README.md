@@ -263,32 +263,61 @@ hazırlandı (`backend/Dockerfile`), ama Render için özel olarak bir
    `10.0.2.2`'ye, gerçek cihazda ise hiç bağlanamayan `localhost`'a
    düşerler).
 
+## GitHub Actions ile ücretsiz Android APK derleme
+
+`eas build` (Expo'nun bulut build servisi) hesap kurulumu/kota gerektirdiği
+için, ona alternatif olarak `.github/workflows/build-android.yml` eklendi —
+GitHub'ın ücretsiz Linux runner'ında (public repo'larda süre sınırı yok)
+`expo prebuild` ile native `android/` klasörünü üretip Gradle'la **debug**
+APK derler, sonucu Actions'ın "Artifacts" bölümüne yükler.
+
+Kullanımı:
+1. Bu workflow dosyası `main`'e push edildiğinde (veya repo → **Actions** →
+   "Android APK derle" → **"Run workflow"** ile elle) otomatik başlar.
+2. Derleme bitince (ilk seferde ~10-15 dakika, sonrakiler Gradle/npm
+   önbelleği sayesinde daha hızlı) ilgili çalıştırmanın sayfasında en altta
+   **Artifacts** altında `paticare-debug-apk` görünür, indirip telefonuna
+   kurabilirsin (Android'de "bilinmeyen kaynaklardan yükleme" izni gerekir).
+3. ⚠️ Bu **debug** imzalı bir APK — telefonunda test etmek ve ekran
+   görüntüsü almak için yeterli, ama Play Store'a **yüklenemez**. Gerçek
+   mağaza gönderimi hâlâ `eas build --profile production` (EAS'ın yönettiği
+   release keystore'uyla) gerektiriyor.
+4. Workflow dosyasındaki `EXPO_PUBLIC_API_URL` da `eas.json`'daki gibi bir
+   yer tutucu — Render deploy'u bitince gerçek adresle güncellenmesi
+   gerekiyor.
+
 ## Genel belgeleri GitHub Pages'te yayınlamak
 
-Hesap silme sayfası artık `docs/hesap-silme.html` olarak da repoda duruyor
-(Artifact üzerinde yayınlanan sürüm hâlâ geçerli, ama o link paylaşılana
-kadar özel — `docs/` altındaki bu kopya GitHub Pages ile kalıcı, herkese açık
-bir URL verir). Bunu gerçekten yayına almak — yani "GitHub'a yükleme" — için
-gereken adımlar tamamen senin GitHub hesabında olduğundan (buradan doğrudan
-push edecek bir kimlik bilgim yok), sırasıyla:
+`docs/` altında GitHub Pages ile servis edilmeye hazır iki bağımsız sayfa
+var:
+- `docs/hesap-silme.html` — Play'in zorunlu tuttuğu, uygulama dışından da
+  erişilebilir hesap silme sayfası (Artifact üzerinde yayınlanan sürüm hâlâ
+  geçerli, ama o link paylaşılana kadar özel — bu kopya kalıcı, herkese açık
+  bir URL verir).
+- `docs/gizlilik-politikasi.html` — Play'in ayrıca istediği herkese açık
+  gizlilik politikası sayfası. İçeriği `mobile/src/components/PrivacyConsent.tsx`'teki
+  `PRIVACY_POLICY_DRAFT` ile birebir aynı — hâlâ bir **TASLAK** ve avukat
+  onayı bekliyor (bkz. görev #49); sayfanın kendisi de bunu açıkça belirtiyor.
+  Avukat onayından sonra hem bu dosyayı hem `PrivacyConsent.tsx`'i güncelle.
 
-1. Yukarıdaki "Backend'i deploy etmek (Render)" bölümündeki 1. adımı
-   uygula: GitHub'da bir repo oluştur, `git remote add origin ...` ve
-   `git push -u origin main` ile bu projeyi (docs/ klasörü dahil) it.
-2. GitHub'da repo sayfasında **Settings → Pages**'e git.
-3. "Build and deployment" altında Source olarak **"Deploy from a branch"**,
+Proje GitHub'a (`burak383/paticare`) push edildi. Yayına almak için kalan
+adım (GitHub hesabında olduğu için buradan yapamıyorum):
+
+1. GitHub'da repo sayfasında **Settings → Pages**'e git.
+2. "Build and deployment" altında Source olarak **"Deploy from a branch"**,
    Branch olarak **`main`** ve klasör olarak **`/docs`** seç, Save'e bas.
-4. Birkaç dakika içinde sayfa şu adreste yayınlanır:
-   `https://<kullanıcı-adın>.github.io/<repo-adı>/hesap-silme.html`
-   (kök adres `.../index.html`'e, oradan da bu sayfaya bağlantı verir).
-5. Bu URL'yi Play Console'da "Hesap silme" alanına ve mağaza listesindeki
-   ilgili yere gir.
+3. Birkaç dakika içinde sayfalar şu adreslerde yayınlanır:
+   `https://burak383.github.io/paticare/hesap-silme.html` ve
+   `https://burak383.github.io/paticare/gizlilik-politikasi.html`
+   (kök adres `.../index.html`, ikisine de bağlantı veriyor).
+4. Bu URL'leri Play Console'da ilgili alanlara (hesap silme / gizlilik
+   politikası) gir.
 
-Not: Play Store için ayrıca **herkese açık bir gizlilik politikası URL'si**
-de gerekiyor — şu an KVKK Aydınlatma Metni yalnızca uygulama içinde
-(`mobile/src/components/PrivacyConsent.tsx`) gösteriliyor, `docs/` altında
-buna karşılık gelen bir sayfa yok. İstersen aynı yöntemle
-`docs/gizlilik-politikasi.html` olarak bir sayfa da hazırlayabilirim.
+`docs/` altına yeni bir sayfa eklediğimde veya var olanı güncellediğimde,
+GitHub Pages'in bunu görmesi için PC'ndeki klasörde tekrar
+`git add docs/ && git commit -m "..." && git push` çalıştırman gerekiyor —
+Settings → Pages ayarını bir daha yapmana gerek yok, otomatik yeniden
+yayınlanır.
 
 ## Google Play'de yayınlama: kalan adımlar
 

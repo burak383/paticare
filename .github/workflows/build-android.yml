@@ -1,0 +1,66 @@
+name: Android APK derle
+
+# EAS'ın bulut build kotasına/hesap kurulumuna bağlı kalmadan, tamamen
+# ücretsiz bir GitHub Actions Linux runner'ında native Android projesini
+# üretip (expo prebuild — bu proje "managed" workflow olduğu için android/
+# klasörü repoda yok, her seferinde burada üretiliyor) Gradle ile debug APK
+# derler. Bu APK, kendi telefonuna kurup test etmek / ekran görüntüsü almak
+# için yeterli — ama debug keystore ile imzalı olduğundan Play Store'a
+# YÜKLENEMEZ. Gerçek mağaza gönderimi için hâlâ `eas build --profile
+# production` (veya kendi release keystore'unla manuel imzalama) gerekiyor.
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/build-android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Render'daki backend'in gerçek adresi belli olunca burayı güncelle —
+      # eas.json'daki preview/production profillerindeki yer tutucuyla aynı
+      # mantık: bu APK'nın içine bu adres gömülü olarak derlenir.
+      EXPO_PUBLIC_API_URL: https://REPLACE-WITH-RENDER-URL.onrender.com/api
+
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Bağımlılıkları kur
+        working-directory: mobile
+        run: npm ci
+
+      - name: JDK 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Native Android projesini oluştur (expo prebuild)
+        working-directory: mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: gradlew'i çalıştırılabilir yap
+        run: chmod +x mobile/android/gradlew
+
+      - name: Debug APK derle
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: APK'yı Actions artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: paticare-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
