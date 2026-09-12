@@ -381,8 +381,18 @@ export default function OnboardingScreen() {
             </View>
             <Text style={styles.brandName}>PatiCare</Text>
           </View>
-          <Pressable style={styles.skipButton} onPress={handleGuestPress} disabled={authBusy}>
-            <Text style={styles.skipText}>Atla</Text>
+          <Pressable
+            style={styles.skipButton}
+            onPress={handleGuestPress}
+            disabled={authBusy}
+            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+            testID="onboarding-skip-button"
+          >
+            {authBusy ? (
+              <ActivityIndicator size="small" color={colors.mutedForeground} />
+            ) : (
+              <Text style={styles.skipText}>Atla</Text>
+            )}
           </Pressable>
         </View>
 

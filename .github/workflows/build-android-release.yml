@@ -25,6 +25,7 @@ jobs:
     env:
       # Render'daki backend'in gerçek adresi belli olunca güncelle.
       EXPO_PUBLIC_API_URL: https://paticare-backend.onrender.com/api
+      EXPO_PUBLIC_GOOGLE_CLIENT_ID: 259953766035-i7t7uga8l4hmvat8755kntk460c6ok2n.apps.googleusercontent.com
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
