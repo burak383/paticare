@@ -482,7 +482,16 @@ export default function ProfileScreen() {
 
   const plusStatus = user?.subscription?.status ?? 'none';
   const plusActive = hasPlusAccess(user?.subscription);
-  const plusBadgeLabel = plusStatus === 'trialing' ? 'DENEME AKTİF' : plusStatus === 'canceled' ? 'İPTAL EDİLDİ' : plusStatus === 'expired' ? 'SONA ERDİ' : 'YENİ';
+  const plusBadgeLabel =
+    plusStatus === 'active'
+      ? 'PLUS AKTİF'
+      : plusStatus === 'trialing'
+        ? 'DENEME AKTİF'
+        : plusStatus === 'canceled'
+          ? 'İPTAL EDİLDİ'
+          : plusStatus === 'expired'
+            ? 'SONA ERDİ'
+            : 'YENİ';
   const plusDescription = plusActive
     ? 'Sınırsız tarama geçmişin açık. Durumunu ve iptal seçeneğini görmek için dokun.'
     : 'Sınırsız tarama geçmişi. 7 gün ücretsiz dene, istediğin zaman vazgeç.';

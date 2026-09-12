@@ -23,7 +23,7 @@ import type { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 // akışını göstermeye devam eder — yani bu dosya, doldurulana kadar hiçbir
 // mevcut davranışı değiştirmez.
 const REVENUECAT_IOS_API_KEY = '';
-const REVENUECAT_ANDROID_API_KEY = '';
+const REVENUECAT_ANDROID_API_KEY = 'goog_UQwLjOBSxyXDiOeuNfwOodThckC';
 
 // RevenueCat panelinde bu kimlikle bir Entitlement oluşturulmalı (ör.
 // "plus"), Aylık/Yıllık ürünlerin ikisi de bu Entitlement'a bağlanmalı.
@@ -74,6 +74,16 @@ export async function fetchPlusOfferings(): Promise<PurchasesPackage[]> {
 export async function purchasePlusPackage(pkg: PurchasesPackage): Promise<CustomerInfo> {
   const { customerInfo } = await Purchases.purchasePackage(pkg);
   return customerInfo;
+}
+
+// Aynı Google/Apple hesabıyla yeniden yüklenen ya da yeni bir cihaza geçen
+// kullanıcının mevcut aboneliğini geri kazanmasının TEK yolu bu — App
+// Store/Play Store incelemesi de bu butonun var olmasını bekler. Hata
+// fırlatırsa çağıran tarafa (PlusScreen) bırakıyoruz, burada yutmuyoruz ki
+// kullanıcı "geri yükleme başarısız" olduğunu görebilsin.
+export async function restorePurchases(): Promise<CustomerInfo | null> {
+  if (!configured) return null;
+  return Purchases.restorePurchases();
 }
 
 export async function getPlusCustomerInfo(): Promise<CustomerInfo | null> {

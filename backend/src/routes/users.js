@@ -6,6 +6,14 @@ const { deriveSubscription } = require('../subscription');
 const router = express.Router();
 router.use(requireAuth);
 
+// Aynı doğrulama kuralı auth.js'teki kayıt akışıyla birebir aynı — burada da
+// tekrarlanıyor çünkü auth.js bunu export etmiyor. Farklılık, gerçek
+// e-postaları reddetmemesi için kasıtlı olarak basit.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(email) {
+  return EMAIL_RE.test(String(email).trim());
+}
+
 function publicUser(user) {
   const { passwordHash, resetCode, resetCodeExpires, pushTokens, ...rest } = user;
   return { ...rest, subscription: deriveSubscription(rest.subscription) };
@@ -21,6 +29,23 @@ router.patch('/me', (req, res) => {
   allowed.forEach((key) => {
     if (key in (req.body || {})) patch[key] = req.body[key];
   });
+  // email değişiyorsa: format kontrolü + başka bir hesapla çakışmadığından
+  // emin ol — yoksa kullanıcı kendi girişini kilitleyebilir ya da başka bir
+  // hesabın e-postasını "çalıp" o hesabın girişini bozabilir.
+  if ('email' in patch) {
+    if (!isValidEmail(patch.email)) {
+      return res.status(400).json({ error: 'Geçerli bir e-posta adresi gir.' });
+    }
+    const normalized = String(patch.email).trim();
+    const clash = db.find(
+      'users',
+      (u) => u.id !== user.id && u.email.toLowerCase() === normalized.toLowerCase(),
+    );
+    if (clash) {
+      return res.status(409).json({ error: 'Bu e-posta ile zaten bir hesap var.' });
+    }
+    patch.email = normalized;
+  }
   const updated = db.update('users', user.id, patch);
   res.json({ user: publicUser(updated) });
 });

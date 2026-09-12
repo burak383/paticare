@@ -7,7 +7,10 @@ export type Preferences = {
 };
 
 export type SubscriptionPlanId = 'monthly' | 'yearly';
-export type SubscriptionStatus = 'none' | 'trialing' | 'canceled' | 'expired';
+// 'active' = gerçek bir RevenueCat satın alması (bkz.
+// backend/src/routes/subscription.js'teki /revenuecat-webhook) — demo deneme
+// akışı buraya hiç ulaşmaz, sadece 'trialing'/'canceled'/'expired' üretir.
+export type SubscriptionStatus = 'none' | 'trialing' | 'canceled' | 'active' | 'expired';
 
 export type Subscription = {
   plan: SubscriptionPlanId | null;
@@ -15,6 +18,11 @@ export type Subscription = {
   trialEndsAt: string | null;
   canceledAt: string | null;
   trialUsed: boolean;
+  // Yalnızca gerçek (RevenueCat) satın almalarda dolu — bkz.
+  // backend/src/subscription.js'teki DEFAULT_SUBSCRIPTION yorumu.
+  store?: 'apple' | 'google' | null;
+  productId?: string | null;
+  expiresAt?: string | null;
 };
 
 export type SubscriptionPlan = {

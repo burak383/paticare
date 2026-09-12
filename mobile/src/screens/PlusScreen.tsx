@@ -18,6 +18,7 @@ import {
   hasPlusEntitlement,
   isRevenueCatConfigured,
   purchasePlusPackage,
+  restorePurchases,
   PLUS_ENTITLEMENT_ID,
 } from '../purchases';
 import type { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
@@ -40,6 +41,22 @@ function formatDate(iso: string | null) {
 }
 
 const BENEFITS = ['Sınırsız tarama geçmişi'];
+
+function BenefitsCard() {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Neler dahil</Text>
+      <View style={styles.benefitList}>
+        {BENEFITS.map((benefit) => (
+          <View key={benefit} style={styles.benefitRow}>
+            <Icon name="check" size={16} color={colors.primary} />
+            <Text style={styles.benefitText}>{benefit}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export default function PlusScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -68,6 +85,25 @@ export default function PlusScreen() {
   const [plusPackages, setPlusPackages] = useState<PurchasesPackage[]>([]);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [purchasingPackageId, setPurchasingPackageId] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
+  // purchasePlusPackage/restorePurchases başarıyla döndüğünde AuthContext'teki
+  // user.subscription'ı da tazeler — bu olmadan ProfileScreen/ScanScreen
+  // (ikisi de user.subscription'a bakıyor) kullanıcı uygulamayı yeniden
+  // açana ya da RevenueCat webhook'u backend'e ulaşana kadar hâlâ
+  // "ücretsiz" görürdü, halbuki bu ekran "Plus aktif" diyor olurdu.
+  async function refreshUserSubscription() {
+    try {
+      const freshUser = await authApi.fetchCurrentUser();
+      setSubscription(freshUser.subscription);
+      updateUser(freshUser);
+    } catch {
+      // Backend webhook'u henüz işlememiş olabilir — RevenueCat'in kendi
+      // customerInfo'su (setCustomerInfo ile) yine de doğru, bu ekran ona
+      // göre "aktif" gösterir; diğer ekranlar bir sonraki fetchCurrentUser
+      // çağrısında (login/app open) yakalar.
+    }
+  }
 
   useEffect(() => {
     if (!isRevenueCatConfigured() || !user?.id) return;
@@ -92,6 +128,7 @@ export default function PlusScreen() {
     try {
       const info = await purchasePlusPackage(pkg);
       setCustomerInfo(info);
+      await refreshUserSubscription();
       Alert.alert('Teşekkürler!', 'PatiCare Plus artık aktif.');
     } catch (err) {
       const cancelled = (err as { userCancelled?: boolean } | null)?.userCancelled;
@@ -100,6 +137,27 @@ export default function PlusScreen() {
       }
     } finally {
       setPurchasingPackageId(null);
+    }
+  }
+
+  // Aynı hesapla yeni bir cihaza geçen ya da uygulamayı silip yeniden kuran
+  // kullanıcı için TEK geri kazanma yolu — App Store/Play Store incelemesi
+  // de satın alma sunan her ekranda bu butonun bulunmasını bekler.
+  async function handleRestorePurchases() {
+    setRestoring(true);
+    try {
+      const info = await restorePurchases();
+      setCustomerInfo(info);
+      if (info && hasPlusEntitlement(info)) {
+        await refreshUserSubscription();
+        Alert.alert('Geri yüklendi', 'PatiCare Plus aboneliğin geri yüklendi.');
+      } else {
+        Alert.alert('Bulunamadı', 'Bu hesapla ilişkili aktif bir PatiCare Plus satın alması bulunamadı.');
+      }
+    } catch (err) {
+      Alert.alert('Geri yükleme başarısız', err instanceof Error ? err.message : 'Bir şeyler ters gitti.');
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -173,49 +231,79 @@ export default function PlusScreen() {
           </View>
           <View style={styles.titleBlock}>
             <Text style={styles.eyebrow}>PATICARE PLUS</Text>
-            <Text style={styles.pageTitle}>{trialDays} gün ücretsiz dene</Text>
-            <Text style={styles.subtitle}>İstediğin zaman iptal edebilirsin. Kart bilgisi istenmez.</Text>
+            <Text style={styles.pageTitle}>
+              {isRevenueCatConfigured() ? 'PatiCare Plus’a geç' : `${trialDays} gün ücretsiz dene`}
+            </Text>
+            <Text style={styles.subtitle}>
+              {isRevenueCatConfigured()
+                ? 'İstediğin zaman Google Play üzerinden iptal edebilirsin.'
+                : 'İstediğin zaman iptal edebilirsin. Kart bilgisi istenmez.'}
+            </Text>
           </View>
         </View>
 
         <View style={styles.mainContent}>
-          {isRevenueCatConfigured() && hasPlusEntitlement(customerInfo) ? (
-            <View style={styles.statusCard} testID="plus-status-active-purchase">
-              <View style={styles.statusBadge}>
-                <Icon name="check-circle" size={14} color={colors.successForeground} />
-                <Text style={styles.statusBadgeText}>PLUS AKTİF</Text>
-              </View>
-              <Text style={styles.statusTitle}>Gerçek abonelik aktif</Text>
-              <Text style={styles.statusText}>
-                {customerInfo?.entitlements.active[PLUS_ENTITLEMENT_ID]?.expirationDate
-                  ? `Yenileme/son geçerlilik: ${formatDate(customerInfo.entitlements.active[PLUS_ENTITLEMENT_ID].expirationDate)}`
-                  : 'Aboneliğin aktif.'}
-              </Text>
-            </View>
-          ) : isRevenueCatConfigured() && plusPackages.length > 0 ? (
-            <View style={styles.planToggle} testID="plus-purchase-packages">
-              {plusPackages.map((pkg) => (
-                <Pressable
-                  key={pkg.identifier}
-                  style={styles.planOption}
-                  onPress={() => handlePurchasePackage(pkg)}
-                  disabled={purchasingPackageId === pkg.identifier}
-                  testID={`plus-purchase-${pkg.identifier}`}
-                >
-                  {purchasingPackageId === pkg.identifier ? (
-                    <ActivityIndicator color={colors.primary} />
-                  ) : (
-                    <>
-                      <Text style={styles.planLabel}>{pkg.product.title}</Text>
-                      <Text style={styles.planPrice}>{pkg.product.priceString}</Text>
-                    </>
-                  )}
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
+          {isRevenueCatConfigured() ? (
+            // Gerçek RevenueCat satın alma modu — aşağıdaki demo/deneme akışı
+            // burada HİÇ gösterilmiyor: ikisi aynı anda görünürse (ör. gerçek
+            // bir abonelik zaten aktifken demo "ücretsiz denemeyi başlat"
+            // butonu da ekranda dursa) kullanıcı için kafa karıştırıcı ve
+            // yanıltıcı olurdu.
+            <>
+              {hasPlusEntitlement(customerInfo) ? (
+                <View style={styles.statusCard} testID="plus-status-active-purchase">
+                  <View style={styles.statusBadge}>
+                    <Icon name="check-circle" size={14} color={colors.successForeground} />
+                    <Text style={styles.statusBadgeText}>PLUS AKTİF</Text>
+                  </View>
+                  <Text style={styles.statusTitle}>Gerçek abonelik aktif</Text>
+                  <Text style={styles.statusText}>
+                    {customerInfo?.entitlements.active[PLUS_ENTITLEMENT_ID]?.expirationDate
+                      ? `Yenileme/son geçerlilik: ${formatDate(customerInfo.entitlements.active[PLUS_ENTITLEMENT_ID].expirationDate)}`
+                      : 'Aboneliğin aktif.'}
+                  </Text>
+                </View>
+              ) : plusPackages.length > 0 ? (
+                <View style={styles.planToggle} testID="plus-purchase-packages">
+                  {plusPackages.map((pkg) => (
+                    <Pressable
+                      key={pkg.identifier}
+                      style={styles.planOption}
+                      onPress={() => handlePurchasePackage(pkg)}
+                      disabled={purchasingPackageId === pkg.identifier}
+                      testID={`plus-purchase-${pkg.identifier}`}
+                    >
+                      {purchasingPackageId === pkg.identifier ? (
+                        <ActivityIndicator color={colors.primary} />
+                      ) : (
+                        <>
+                          <Text style={styles.planLabel}>{pkg.product.title}</Text>
+                          <Text style={styles.planPrice}>{pkg.product.priceString}</Text>
+                        </>
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+              )}
 
-          {loadingPlans ? (
+              <Pressable
+                style={styles.restoreButton}
+                onPress={handleRestorePurchases}
+                disabled={restoring}
+                testID="restore-purchases-button"
+              >
+                {restoring ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : (
+                  <Text style={styles.restoreButtonText}>Satın almaları geri yükle</Text>
+                )}
+              </Pressable>
+
+              <BenefitsCard />
+            </>
+          ) : loadingPlans ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
           ) : (
             <>
@@ -289,17 +377,7 @@ export default function PlusScreen() {
                 </>
               )}
 
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Neler dahil</Text>
-                <View style={styles.benefitList}>
-                  {BENEFITS.map((benefit) => (
-                    <View key={benefit} style={styles.benefitRow}>
-                      <Icon name="check" size={16} color={colors.primary} />
-                      <Text style={styles.benefitText}>{benefit}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
+              <BenefitsCard />
 
               <View style={styles.demoBox}>
                 <Text style={styles.demoLabel}>DEMO MODU</Text>
@@ -347,6 +425,8 @@ const styles = StyleSheet.create({
   planPriceSelected: { color: colors.foreground },
   primaryButton: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius, flexDirection: 'row', gap: 8, height: 56, justifyContent: 'center', marginTop: 20 },
   primaryButtonText: { color: colors.primaryForeground, fontFamily: fonts.body, fontSize: 15, fontWeight: '800' },
+  restoreButton: { alignItems: 'center', height: 44, justifyContent: 'center', marginTop: 12 },
+  restoreButtonText: { color: colors.primary, fontFamily: fonts.body, fontSize: 13, fontWeight: '700' },
   card: { backgroundColor: colors.card, borderColor: colors.border, borderRadius: radius, borderWidth: 1, marginTop: 20, padding: 20 },
   cardTitle: { color: colors.foreground, fontFamily: fonts.heading, fontSize: 16, fontWeight: '800' },
   benefitList: { gap: 10, marginTop: 12 },

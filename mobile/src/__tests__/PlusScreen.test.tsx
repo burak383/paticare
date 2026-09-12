@@ -33,18 +33,28 @@ jest.mock('../api', () => ({
 // react-native-purchases (RevenueCat) ships an ESM web-billing bundle deep in
 // its dependency tree that Jest can't parse, and it's a real native module
 // anyway — same reasoning as mocking expo-notifications elsewhere in this
-// suite. isRevenueCatConfigured() returning false here means PlusScreen
-// takes its existing demo-trial code path, unaffected by task #52's
-// RevenueCat wiring (see mobile/src/purchases.ts — the real API keys are
-// blank until task #52's setup is done, so this mock mirrors production
-// behavior today, not just test behavior).
+// suite. jest.fn() wrappers (rather than fixed mock bodies) let individual
+// tests below flip isRevenueCatConfigured()/hasPlusEntitlement() to exercise
+// the real-purchase code path too, not just the demo-trial one.
+// Plain jest.fn() (no inline implementation) — an inline arrow like
+// `jest.fn(() => false)` pins the mock's inferred TS signature to zero
+// arguments, which then fights the generic `(...args) => mockX(...args)`
+// wrappers below. Defaults are set explicitly in beforeEach instead.
+const mockIsRevenueCatConfigured = jest.fn();
+const mockFetchPlusOfferings = jest.fn();
+const mockGetPlusCustomerInfo = jest.fn();
+const mockPurchasePlusPackage = jest.fn();
+const mockRestorePurchases = jest.fn();
+const mockHasPlusEntitlement = jest.fn();
+
 jest.mock('../purchases', () => ({
-  isRevenueCatConfigured: () => false,
+  isRevenueCatConfigured: (...args: unknown[]) => mockIsRevenueCatConfigured(...args),
   configureRevenueCat: jest.fn(),
-  fetchPlusOfferings: jest.fn().mockResolvedValue([]),
-  getPlusCustomerInfo: jest.fn().mockResolvedValue(null),
-  purchasePlusPackage: jest.fn(),
-  hasPlusEntitlement: () => false,
+  fetchPlusOfferings: (...args: unknown[]) => mockFetchPlusOfferings(...args),
+  getPlusCustomerInfo: (...args: unknown[]) => mockGetPlusCustomerInfo(...args),
+  purchasePlusPackage: (...args: unknown[]) => mockPurchasePlusPackage(...args),
+  restorePurchases: (...args: unknown[]) => mockRestorePurchases(...args),
+  hasPlusEntitlement: (...args: unknown[]) => mockHasPlusEntitlement(...args),
   addPlusUpdateListener: () => () => {},
   PLUS_ENTITLEMENT_ID: 'plus',
 }));
@@ -79,6 +89,15 @@ describe('PlusScreen', () => {
     mockUseAuth.mockReturnValue({ user: baseUser(), updateUser: mockUpdateUser });
     mockGetPlans.mockResolvedValue({ plans: PLANS, trialDays: 7 });
     mockFetchCurrentUser.mockResolvedValue(baseUser());
+    // clearAllMocks() wipes call history but not a previous test's
+    // mockReturnValue/mockResolvedValue — reset explicitly so tests don't
+    // depend on run order.
+    mockIsRevenueCatConfigured.mockReturnValue(false);
+    mockFetchPlusOfferings.mockResolvedValue([]);
+    mockGetPlusCustomerInfo.mockResolvedValue(null);
+    mockHasPlusEntitlement.mockReturnValue(false);
+    mockPurchasePlusPackage.mockReset();
+    mockRestorePurchases.mockReset();
   });
 
   it('goes back when the back button is pressed', async () => {
@@ -158,5 +177,65 @@ describe('PlusScreen', () => {
 
     await findByTestId('plus-status-expired');
     expect(queryByTestId('start-trial-button')).toBeNull();
+  });
+
+  describe('gerçek RevenueCat modu (isRevenueCatConfigured() === true)', () => {
+    beforeEach(() => {
+      mockIsRevenueCatConfigured.mockReturnValue(true);
+    });
+
+    it('demo/deneme kutusunu hiç göstermez — gerçek satın alma modunda yanıltıcı olurdu', async () => {
+      const { findByTestId, queryByText } = await render(<PlusScreen />);
+      await findByTestId('restore-purchases-button');
+      expect(queryByText('DEMO MODU')).toBeNull();
+      expect(queryByText('start-trial-button')).toBeNull();
+    });
+
+    it('bir paket satın alındığında AuthContext kullanıcısını tazeler (regresyon: audit #1)', async () => {
+      const pkg = { identifier: 'plus_monthly', product: { title: 'Aylık', priceString: '₺49,99' } } as any;
+      mockFetchPlusOfferings.mockResolvedValue([pkg]);
+      const activeInfo = { entitlements: { active: {} } } as any;
+      mockPurchasePlusPackage.mockResolvedValue(activeInfo);
+      const purchasedUser = baseUser({ plan: 'monthly', status: 'active' as any, trialEndsAt: null, canceledAt: null, trialUsed: true });
+      mockFetchCurrentUser.mockResolvedValueOnce(baseUser()).mockResolvedValueOnce(purchasedUser);
+
+      const { findByTestId } = await render(<PlusScreen />);
+      const buyButton = await findByTestId('plus-purchase-plus_monthly');
+      await fireEvent.press(buyButton);
+
+      await waitFor(() => expect(mockPurchasePlusPackage).toHaveBeenCalledWith(pkg));
+      await waitFor(() => expect(mockUpdateUser).toHaveBeenCalledWith(purchasedUser));
+    });
+
+    it('"Satın almaları geri yükle" bulduğu aktif aboneliği AuthContext\'e de yansıtır (regresyon: audit #2)', async () => {
+      const restoredInfo = { entitlements: { active: { plus: {} } } } as any;
+      mockRestorePurchases.mockResolvedValue(restoredInfo);
+      mockHasPlusEntitlement.mockImplementation((info: unknown) => info === restoredInfo);
+      const restoredUser = baseUser({ plan: 'yearly', status: 'active' as any, trialEndsAt: null, canceledAt: null, trialUsed: true });
+      mockFetchCurrentUser.mockResolvedValueOnce(baseUser()).mockResolvedValueOnce(restoredUser);
+
+      const { findByTestId } = await render(<PlusScreen />);
+      const restoreButton = await findByTestId('restore-purchases-button');
+      await fireEvent.press(restoreButton);
+
+      await waitFor(() => expect(mockRestorePurchases).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(mockUpdateUser).toHaveBeenCalledWith(restoredUser));
+    });
+
+    it('geri yüklenecek bir şey bulunamazsa AuthContext\'i tazelemeden kullanıcıyı bilgilendirir', async () => {
+      mockRestorePurchases.mockResolvedValue({ entitlements: { active: {} } } as any);
+      mockHasPlusEntitlement.mockReturnValue(false);
+      const alertSpy = jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(() => {});
+
+      const { findByTestId } = await render(<PlusScreen />);
+      const restoreButton = await findByTestId('restore-purchases-button');
+      mockUpdateUser.mockClear();
+      await fireEvent.press(restoreButton);
+
+      await waitFor(() => expect(mockRestorePurchases).toHaveBeenCalledTimes(1));
+      expect(alertSpy).toHaveBeenCalledWith('Bulunamadı', expect.any(String));
+      expect(mockUpdateUser).not.toHaveBeenCalled();
+      alertSpy.mockRestore();
+    });
   });
 });

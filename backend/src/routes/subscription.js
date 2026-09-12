@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
@@ -21,12 +22,23 @@ function publicUser(user) {
 // Project settings > Webhooks altında bu backend'in genel (public) adresi +
 // /api/subscription/revenuecat-webhook eklenip "Authorization header value"
 // alanına REVENUECAT_WEBHOOK_AUTH_HEADER ile aynı değer yazılmalı.
+// Sabit zamanlı karşılaştırma: düz `!==` kullansaydık, karşılaştırmanın ne
+// kadar sürdüğü (ilk uyuşmayan karaktere kadar) paylaşılan sır hakkında ufak
+// bir zamanlama sinyali sızdırabilirdi. Uzunluklar farklıysa
+// timingSafeEqual zaten hata fırlatır, o yüzden önce onu kontrol ediyoruz.
+function timingSafeEqualStr(a, b) {
+  const bufA = Buffer.from(String(a ?? ''));
+  const bufB = Buffer.from(String(b ?? ''));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 router.post('/revenuecat-webhook', (req, res) => {
   const expected = process.env.REVENUECAT_WEBHOOK_AUTH_HEADER;
   if (!expected) {
     return res.status(503).json({ error: 'RevenueCat webhook yapılandırılmadı (REVENUECAT_WEBHOOK_AUTH_HEADER eksik).' });
   }
-  if (req.headers.authorization !== expected) {
+  if (!timingSafeEqualStr(req.headers.authorization, expected)) {
     return res.status(401).json({ error: 'Yetkisiz.' });
   }
 
@@ -48,7 +60,9 @@ router.post('/revenuecat-webhook', (req, res) => {
 
   const ACTIVE_TYPES = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'PRODUCT_CHANGE', 'UNCANCELLATION']);
   const CANCEL_TYPES = new Set(['CANCELLATION']);
-  const INACTIVE_TYPES = new Set(['EXPIRATION', 'BILLING_ISSUE']);
+  // REFUND: RevenueCat parayı iade ettiğinde gönderiyor — erişimi hemen
+  // kapatmazsak iade alan kullanıcı Plus'ı süresiz kullanmaya devam ederdi.
+  const INACTIVE_TYPES = new Set(['EXPIRATION', 'BILLING_ISSUE', 'REFUND']);
 
   let subscription = user.subscription;
   if (ACTIVE_TYPES.has(event.type)) {
