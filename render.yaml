@@ -13,7 +13,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    plan: starter # kalıcı disk için Free yeterli değil — bkz. yukarıdaki not
+    plan: 0.5c-512mb # kalıcı disk için Free yeterli değil — bkz. yukarıdaki not (eski "starter" ismi Render'da artık gecerli degil)
     region: frankfurt # Türkiye'ye en yakın Render bölgesi; istersen değiştir
     healthCheckPath: /api/health-check
     disk:
