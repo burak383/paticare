@@ -38,6 +38,7 @@ jest.mock('../api', () => ({
     fetchScanHistory: (...args: unknown[]) => mockFetchScanHistory(...args),
     getProduct: jest.fn(),
     analyzeSafety: jest.fn(),
+    getScanConfig: jest.fn().mockResolvedValue(false),
   },
 }));
 

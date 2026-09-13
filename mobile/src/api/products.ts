@@ -1,6 +1,13 @@
 import { apiRequest } from './client';
 import type { PriceNote, Product, SafetyAnalysis, ScanHistoryEntry } from './types';
 
+// Vision API gerçekten yapılandırılmış mı? Tara ekranı, kamera taramasına
+// başlamadan önce "DEMO" rozetini/açıklamasını göstermeden önce bunu sorar.
+export async function getScanConfig() {
+  const res = await apiRequest<{ visionConfigured: boolean }>('/products/scan-config');
+  return res.visionConfigured;
+}
+
 export async function searchProducts(query: string) {
   const res = await apiRequest<{ products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}`);
   return res.products;

@@ -36,6 +36,16 @@ function matchProductFromVisionDetection(detection) {
   return products.find((p) => haystack.includes(normalize(p.name))) || null;
 }
 
+// GET /api/products/scan-config -> lets the Tara screen know, up front, whether
+// real Google Cloud Vision recognition is configured on the server, so it can
+// hide its "DEMO" badge/disclosure once GOOGLE_VISION_API_KEY is actually set
+// (mirrors how PlusScreen/OnboardingScreen already hide their own demo UI —
+// see isRevenueCatConfigured() and forgotDevCode). Kept separate from the
+// scan result itself because the badge is shown before any scan happens.
+router.get('/scan-config', (req, res) => {
+  res.json({ visionConfigured: isVisionConfigured() });
+});
+
 // GET /api/products/search?q=omega  -> the search feature backing the "Ara" tab on Tara
 router.get('/search', (req, res) => {
   const q = normalize(req.query.q);

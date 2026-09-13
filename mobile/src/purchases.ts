@@ -22,7 +22,7 @@ import type { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 // isRevenueCatConfigured() false döner) ve PlusScreen mevcut demo deneme
 // akışını göstermeye devam eder — yani bu dosya, doldurulana kadar hiçbir
 // mevcut davranışı değiştirmez.
-const REVENUECAT_IOS_API_KEY = '';
+const REVENUECAT_IOS_API_KEY = 'appl_KCSTinvOyDeBinmKiyMVTWUrYdn';
 const REVENUECAT_ANDROID_API_KEY = 'goog_UQwLjOBSxyXDiOeuNfwOodThckC';
 
 // RevenueCat panelinde bu kimlikle bir Entitlement oluşturulmalı (ör.
@@ -39,8 +39,18 @@ export const PLUS_PRODUCT_IDS = {
 
 let configured = false;
 
+function currentApiKey(): string {
+  if (Platform.OS === 'ios') return REVENUECAT_IOS_API_KEY;
+  if (Platform.OS === 'android') return REVENUECAT_ANDROID_API_KEY;
+  // Web veya başka bir platform: bunlar RevenueCat'in "Web Billing" anahtarı
+  // gerektirir (goog_/appl_ mobil anahtarlarıyla uyumsuz, "Invalid API key"
+  // hatası fırlatıp PlusScreen'i çökertir). Bu proje için ayrı bir web
+  // anahtarı yok, o yüzden web'de her zaman yapılandırılmamış say.
+  return '';
+}
+
 export function isRevenueCatConfigured() {
-  return Platform.OS === 'ios' ? Boolean(REVENUECAT_IOS_API_KEY) : Boolean(REVENUECAT_ANDROID_API_KEY);
+  return Boolean(currentApiKey());
 }
 
 // appUserID'yi bilerek PatiCare'in kendi kullanıcı id'siyle aynı tutuyoruz
@@ -50,10 +60,17 @@ export function isRevenueCatConfigured() {
 // gerekmiyor.
 export function configureRevenueCat(appUserID: string) {
   if (configured || !isRevenueCatConfigured()) return;
-  const apiKey = Platform.OS === 'ios' ? REVENUECAT_IOS_API_KEY : REVENUECAT_ANDROID_API_KEY;
+  const apiKey = currentApiKey();
   if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-  Purchases.configure({ apiKey, appUserID });
-  configured = true;
+  try {
+    Purchases.configure({ apiKey, appUserID });
+    configured = true;
+  } catch (err) {
+    // Yanlış/geçersiz bir anahtar (ör. yanlış platforma ait) tüm ekranı
+    // çökertmesin — PlusScreen zaten isRevenueCatConfigured() false
+    // durumunda demo/deneme akışını göstermeye devam ediyor.
+    console.warn('[PatiCare] RevenueCat yapılandırılamadı:', err);
+  }
 }
 
 export async function fetchPlusOfferings(): Promise<PurchasesPackage[]> {
