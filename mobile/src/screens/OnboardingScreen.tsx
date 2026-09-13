@@ -33,7 +33,15 @@ WebBrowser.maybeCompleteAuthSession();
 // fabricated here. Set EXPO_PUBLIC_GOOGLE_CLIENT_ID (and the backend's
 // GOOGLE_CLIENT_ID, which must match) to turn this on; until then the button
 // tells the user clearly why it can't proceed instead of failing silently.
+//
+// Android ve iOS için Google Cloud Console'da AYRI istemci türleri gerekiyor
+// (Android: paket adı + SHA-1 ile doğrulanır; iOS: bundle identifier ile —
+// SHA-1 yok). Aynı istemci kimliği iki platformda da kullanılamaz, bu yüzden
+// iOS'un kendi EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'si var (ve backend'de eşleşen
+// GOOGLE_IOS_CLIENT_ID — bkz. backend/src/routes/auth.js).
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_CONFIGURED_CLIENT_ID = Platform.OS === 'ios' ? GOOGLE_IOS_CLIENT_ID : GOOGLE_CLIENT_ID;
 
 const heroImage =
   'https://fwtngjyirchhhysukjxi.supabase.co/storage/v1/object/public/project-images/bdc175db-7851-4139-9f11-a3216057da08/e2cbc572-9106-406f-8bdf-df1040e1b205.png';
@@ -168,9 +176,22 @@ export default function OnboardingScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [forgotBusy, setForgotBusy] = useState(false);
 
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
-    clientId: GOOGLE_CLIENT_ID || 'not-configured',
-  });
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest(
+    {
+      clientId: GOOGLE_CLIENT_ID || 'not-configured',
+      androidClientId: GOOGLE_CLIENT_ID || 'not-configured',
+      iosClientId: GOOGLE_IOS_CLIENT_ID || 'not-configured',
+    },
+    // Varsayılan yönlendirme (Application.applicationId'den, yani bundle ID'den
+    // türetilir) Android'de hiç kayıtlı bir URL şeması değil — sadece iOS'ta
+    // Expo'nun temel plugin'i bundle ID'yi otomatik olarak da bir şema olarak
+    // ekliyor, Android'de eklemiyor (bkz. AndroidManifest.xml'deki tek
+    // intent-filter: "paticare"). Bu yüzden uygulamanın zaten her iki
+    // platformda da kayıtlı olan kendi şemasını (app.json → expo.scheme)
+    // açıkça kullanıyoruz — aksi halde Google'ın yönlendirmesi Android'de
+    // hiçbir yere gitmiyordu.
+    { native: 'paticare:/oauthredirect' },
+  );
 
   const [petName, setPetName] = useState('Ares');
   const [species, setSpecies] = useState('Kedi');
@@ -231,10 +252,12 @@ export default function OnboardingScreen() {
   }
 
   async function handleGooglePress() {
-    if (!GOOGLE_CLIENT_ID) {
+    if (!GOOGLE_CONFIGURED_CLIENT_ID) {
       Alert.alert(
         'Google girişi yapılandırılmadı',
-        'Bunun çalışması için Google Cloud Console\'da bir OAuth istemcisi oluşturup EXPO_PUBLIC_GOOGLE_CLIENT_ID (mobil) ve GOOGLE_CLIENT_ID (backend/.env) değerlerini eşleşecek şekilde ayarlaman gerekiyor.',
+        Platform.OS === 'ios'
+          ? 'Bunun çalışması için Google Cloud Console\'da bir iOS OAuth istemcisi oluşturup EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID (mobil) ve GOOGLE_IOS_CLIENT_ID (backend/.env) değerlerini eşleşecek şekilde ayarlaman gerekiyor.'
+          : 'Bunun çalışması için Google Cloud Console\'da bir OAuth istemcisi oluşturup EXPO_PUBLIC_GOOGLE_CLIENT_ID (mobil) ve GOOGLE_CLIENT_ID (backend/.env) değerlerini eşleşecek şekilde ayarlaman gerekiyor.',
       );
       return;
     }

@@ -275,8 +275,16 @@ router.post('/social', async (req, res) => {
   let avatarUrl = null;
 
   if (provider === 'google') {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    if (!clientId) {
+    // Android ve iOS ayrı Google OAuth istemci türleri kullanıyor (Android:
+    // paket adı + SHA-1; iOS: bundle identifier, SHA-1 yok) — bu yüzden ID
+    // jetonunun "aud" alanı hangi platformdan geldiğine göre ikisinden biri
+    // olabilir. GOOGLE_IOS_CLIENT_ID henüz ayarlanmadıysa (iOS girişi daha
+    // kurulmadıysa) sadece Android istemcisi kabul edilir — mevcut davranış
+    // hiç bozulmaz.
+    const androidClientId = process.env.GOOGLE_CLIENT_ID;
+    const iosClientId = process.env.GOOGLE_IOS_CLIENT_ID;
+    const validClientIds = [androidClientId, iosClientId].filter(Boolean);
+    if (validClientIds.length === 0) {
       return res.status(501).json({
         error:
           'Google girişi backend tarafında yapılandırılmamış. Google Cloud Console\'dan bir OAuth istemci kimliği oluşturup backend/.env dosyasına GOOGLE_CLIENT_ID olarak eklemelisin.',
@@ -292,7 +300,7 @@ router.post('/social', async (req, res) => {
       return res.status(401).json({ error: 'Google kimlik doğrulaması başarısız.' });
     }
 
-    if (payload.aud !== clientId) {
+    if (!validClientIds.includes(payload.aud)) {
       return res.status(401).json({ error: 'Google kimlik doğrulaması başarısız (istemci kimliği uyuşmuyor).' });
     }
     email = payload.email;
