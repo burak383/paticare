@@ -44,18 +44,25 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
           };
 
           if (isScan) {
+            // Bilerek tek bir Pressable: önceki sürümde "Tara" etiketi butonun
+            // DIŞINDAYDI (View > Pressable(sadece ikon) + Text), yani kullanıcı
+            // yuvarlak kamera ikonunun tam üstüne değil de altındaki "Tara"
+            // yazısına dokununca hiçbir şey olmuyordu — diğer sekmelerde etiket
+            // Pressable'ın İÇİNDE olduğu için bu tutarsızlık sadece bu sekmede
+            // vardı. Artık ikon + etiket tek dokunma alanı.
             return (
-              <View key={route.key} style={styles.scanItem}>
-                <Pressable
-                  onPress={onPress}
-                  accessibilityRole="button"
-                  accessibilityLabel="Tara"
-                  style={styles.scanButton}
-                >
+              <Pressable
+                key={route.key}
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityLabel="Tara"
+                style={styles.scanItem}
+              >
+                <View style={styles.scanButton}>
                   <Feather name={icon} size={24} color={colors.primaryForeground} />
-                </Pressable>
+                </View>
                 <Text style={styles.scanLabel}>{label}</Text>
-              </View>
+              </Pressable>
             );
           }
 
