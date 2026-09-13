@@ -17,6 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.paticare.mobile",
+      "buildNumber": "1",
       "infoPlist": {
         "NSFaceIDUsageDescription": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
       }
@@ -57,7 +58,8 @@
             "./assets/sounds/ping.wav"
           ]
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ]
   }
 }

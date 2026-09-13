@@ -96,3 +96,17 @@ export async function loginWithGoogle(idToken: string) {
   await setToken(res.token);
   return res.user;
 }
+
+// fullName: Apple sadece İLK yetkilendirmede (kullanıcı "Continue"a bastığı an)
+// isim gönderir — expo-apple-authentication'ın signInAsync() sonucundaki
+// credential.fullName'den geliyor. Sonraki girişlerde bu alan boş olur, backend
+// de o durumda mevcut kullanıcının adını değiştirmiyor (bkz. auth.js).
+export async function loginWithApple(idToken: string, fullName?: string | null) {
+  const res = await apiRequest<AuthResponse>('/auth/social', {
+    method: 'POST',
+    body: { provider: 'apple', idToken, fullName: fullName || undefined },
+    auth: false,
+  });
+  await setToken(res.token);
+  return res.user;
+}

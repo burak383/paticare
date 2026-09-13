@@ -5,6 +5,7 @@ const db = require('../db');
 const { signToken, requireAuth } = require('../middleware/auth');
 const { DEFAULT_SUBSCRIPTION, deriveSubscription } = require('../subscription');
 const { sendPasswordResetEmail, isEmailConfigured } = require('../email');
+const { isAppleAuthConfigured, verifyAppleIdToken } = require('../appleAuth');
 
 const router = express.Router();
 
@@ -243,43 +244,82 @@ router.post('/change-password', requireAuth, (req, res) => {
   res.json({ user: publicUser(updated) });
 });
 
-// POST /api/auth/social { provider: 'google', idToken }
-// Verifies a Google ID token against Google's tokeninfo endpoint and logs the
-// user in (creating an account on first sign-in). Requires GOOGLE_CLIENT_ID to
-// be set in the backend's .env to the OAuth client ID from Google Cloud
-// Console — without it there is no client to verify the token against, so the
-// endpoint responds with a clear setup error instead of silently failing.
+// POST /api/auth/social { provider: 'google' | 'apple', idToken, fullName? }
+// Google: kimlik jetonunu Google'ın tokeninfo endpoint'ine karşı doğrular.
+// GOOGLE_CLIENT_ID .env'de tanımlı olmalı (Google Cloud Console'daki OAuth
+// istemci kimliği) — yoksa doğrulanacak istemci olmadığından sessizce
+// başarısız olmak yerine net bir kurulum hatası döner.
+//
+// Apple: kimlik jetonu (JWT) Apple'ın yayınladığı JWKS ile imzalı — ayrıntılı
+// doğrulama mantığı için bkz. ../appleAuth.js. APPLE_BUNDLE_ID .env'de
+// tanımlı olmalı (uygulamanın bundle identifier'ı, örn. app.paticare.mobile).
+// Apple e-postayı HER girişte JWT içinde gönderir, ama İSİM sadece kullanıcı
+// ilk kez "Continue with Apple"a bastığında (mobil taraftaki native
+// credential'dan) gelir — bu yüzden fullName isteğe bağlı ve sadece yeni
+// hesap oluşturulurken kullanılıyor; mevcut bir kullanıcının adını asla
+// (fullName eksik geldiğinde) ezmiyoruz.
+//
+// Her iki sağlayıcı da aynı ortak akışa çıkıyor: e-postayla mevcut kullanıcı
+// aranır, yoksa yeni hesap açılır, sonra normal oturum jetonu verilir.
 router.post('/social', async (req, res) => {
-  const { provider, idToken } = req.body || {};
-  if (provider !== 'google') {
+  const { provider, idToken, fullName } = req.body || {};
+  if (provider !== 'google' && provider !== 'apple') {
     return res.status(400).json({ error: 'Desteklenmeyen sağlayıcı.' });
   }
   if (!idToken) {
     return res.status(400).json({ error: 'idToken gerekli.' });
   }
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    return res.status(501).json({
-      error:
-        'Google girişi backend tarafında yapılandırılmamış. Google Cloud Console\'dan bir OAuth istemci kimliği oluşturup backend/.env dosyasına GOOGLE_CLIENT_ID olarak eklemelisin.',
-    });
-  }
 
-  let payload;
-  try {
-    const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
-    if (!verifyRes.ok) throw new Error('invalid token');
-    payload = await verifyRes.json();
-  } catch (err) {
-    return res.status(401).json({ error: 'Google kimlik doğrulaması başarısız.' });
-  }
+  let email;
+  let name;
+  let avatarUrl = null;
 
-  if (payload.aud !== clientId) {
-    return res.status(401).json({ error: 'Google kimlik doğrulaması başarısız (istemci kimliği uyuşmuyor).' });
-  }
-  const email = payload.email;
-  if (!email) {
-    return res.status(401).json({ error: 'Google hesabında e-posta bulunamadı.' });
+  if (provider === 'google') {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(501).json({
+        error:
+          'Google girişi backend tarafında yapılandırılmamış. Google Cloud Console\'dan bir OAuth istemci kimliği oluşturup backend/.env dosyasına GOOGLE_CLIENT_ID olarak eklemelisin.',
+      });
+    }
+
+    let payload;
+    try {
+      const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+      if (!verifyRes.ok) throw new Error('invalid token');
+      payload = await verifyRes.json();
+    } catch (err) {
+      return res.status(401).json({ error: 'Google kimlik doğrulaması başarısız.' });
+    }
+
+    if (payload.aud !== clientId) {
+      return res.status(401).json({ error: 'Google kimlik doğrulaması başarısız (istemci kimliği uyuşmuyor).' });
+    }
+    email = payload.email;
+    if (!email) {
+      return res.status(401).json({ error: 'Google hesabında e-posta bulunamadı.' });
+    }
+    name = payload.name || email.split('@')[0];
+    avatarUrl = payload.picture || null;
+  } else {
+    if (!isAppleAuthConfigured()) {
+      return res.status(501).json({
+        error:
+          'Apple ile giriş backend tarafında yapılandırılmamış. Uygulamanın bundle identifier\'ını backend/.env dosyasına APPLE_BUNDLE_ID olarak eklemelisin.',
+      });
+    }
+
+    let payload;
+    try {
+      payload = await verifyAppleIdToken(idToken);
+    } catch (err) {
+      return res.status(401).json({ error: 'Apple kimlik doğrulaması başarısız.' });
+    }
+    email = payload.email;
+    if (!email) {
+      return res.status(401).json({ error: 'Apple hesabında e-posta bulunamadı.' });
+    }
+    name = fullName || email.split('@')[0];
   }
 
   let user = db.find('users', (u) => u.email.toLowerCase() === email.toLowerCase());
@@ -287,11 +327,11 @@ router.post('/social', async (req, res) => {
     user = {
       id: nanoid(),
       email,
-      name: payload.name || email.split('@')[0],
+      name,
       passwordHash: null,
       guest: false,
-      authProvider: 'google',
-      avatarUrl: payload.picture || null,
+      authProvider: provider,
+      avatarUrl,
       preferences: { ...DEFAULT_PREFERENCES },
       subscription: { ...DEFAULT_SUBSCRIPTION },
       createdAt: new Date().toISOString(),

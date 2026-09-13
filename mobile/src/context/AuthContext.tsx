@@ -36,6 +36,7 @@ type AuthContextValue = {
   // from forgotPassword/resetPassword, which are for someone locked out.
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithApple: (idToken: string, fullName?: string | null) => Promise<void>;
   // Face ID / fingerprint quick-unlock. `locked` is true when a session token
   // already exists but biometric confirmation is required before it's used —
   // unlockWithBiometrics() clears it.
@@ -203,6 +204,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loginWithApple = useCallback(async (idToken: string, fullName?: string | null) => {
+    setError(null);
+    try {
+      const u = await authApi.loginWithApple(idToken, fullName);
+      setUser(u);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Apple ile giriş başarısız.');
+      throw err;
+    }
+  }, []);
+
   const updateUser = useCallback((u: User) => {
     setUser(u);
   }, []);
@@ -257,6 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resetPassword,
       changePassword,
       loginWithGoogle,
+      loginWithApple,
       biometricSupported,
       biometricEnabled,
       locked,
@@ -278,6 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resetPassword,
       changePassword,
       loginWithGoogle,
+      loginWithApple,
       biometricSupported,
       biometricEnabled,
       locked,

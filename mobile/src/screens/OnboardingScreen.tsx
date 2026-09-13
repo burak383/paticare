@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { colors, fonts } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { usePets } from '../context/PetContext';
@@ -141,6 +143,7 @@ export default function OnboardingScreen() {
     forgotPassword,
     resetPassword,
     loginWithGoogle,
+    loginWithApple,
     biometricSupported,
     setBiometricEnabled,
   } = useAuth();
@@ -227,13 +230,6 @@ export default function OnboardingScreen() {
     }
   }
 
-  async function handleSocialPress(provider: string) {
-    Alert.alert(
-      'Yakında',
-      `${provider} ile giriş şu anda demo backend'de desteklenmiyor. Şimdilik e-posta ya da misafir modunu kullanabilirsin.`,
-    );
-  }
-
   async function handleGooglePress() {
     if (!GOOGLE_CLIENT_ID) {
       Alert.alert(
@@ -246,6 +242,43 @@ export default function OnboardingScreen() {
       await promptGoogleAsync();
     } catch (err) {
       Alert.alert('Google girişi başarısız', err instanceof Error ? err.message : 'Bilinmeyen hata.');
+    }
+  }
+
+  // Apple, Google gibi bir üçüncü taraf girişi sunan iOS uygulamalarının
+  // Sign in with Apple'ı da sunmasını şart koşuyor (App Store İnceleme
+  // Kuralları 4.8) — bu yüzden bu buton sadece "yakında" değil, gerçekten
+  // çalışıyor. Google'daki gibi bir tarayıcı yönlendirmesi yok: iOS'un kendi
+  // native Apple ID onay ekranı açılıyor ve credential doğrudan dönüyor.
+  // Apple e-postayı HER girişte veriyor, ama İSMİ sadece kullanıcı ilk kez
+  // izin verdiğinde (credential.fullName) — o yüzden fullName'i backend'e
+  // gönderiyoruz ama sonraki girişlerde bu alan boş gelebilir, backend de
+  // o durumda mevcut kullanıcının adını değiştirmiyor (bkz. backend/src/routes/auth.js).
+  async function handleApplePress() {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) {
+        throw new Error('Apple kimlik jetonu alınamadı.');
+      }
+      const fullName = credential.fullName
+        ? [credential.fullName.givenName, credential.fullName.familyName].filter(Boolean).join(' ').trim()
+        : null;
+      setAuthBusy(true);
+      await loginWithApple(credential.identityToken, fullName || null);
+      maybeOfferBiometrics();
+    } catch (err) {
+      // Kullanıcı iptal ederse Apple bunu ERR_REQUEST_CANCELED koduyla bir hata
+      // olarak fırlatıyor — bu bir hata değil, sessizce vazgeçiyoruz.
+      const code = (err as { code?: string } | null)?.code;
+      if (code === 'ERR_REQUEST_CANCELED') return;
+      Alert.alert('Apple ile giriş başarısız', err instanceof Error ? err.message : 'Bilinmeyen hata.');
+    } finally {
+      setAuthBusy(false);
     }
   }
 
@@ -528,10 +561,17 @@ export default function OnboardingScreen() {
                 <Text style={styles.outlineButtonText}>Google ile devam et</Text>
               </RoundedButton>
 
-              <RoundedButton style={styles.outlineButton} onPress={() => handleSocialPress('Apple')}>
-                <Icon name="apple" size={18} color={colors.foreground} />
-                <Text style={styles.outlineButtonText}>Apple ile devam et</Text>
-              </RoundedButton>
+              {Platform.OS === 'ios' ? (
+                <RoundedButton
+                  style={styles.outlineButton}
+                  onPress={handleApplePress}
+                  disabled={authBusy}
+                  testID="apple-signin-button"
+                >
+                  <Icon name="apple" size={18} color={colors.foreground} />
+                  <Text style={styles.outlineButtonText}>Apple ile devam et</Text>
+                </RoundedButton>
+              ) : null}
             </View>
           )}
 
