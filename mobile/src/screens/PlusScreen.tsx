@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -41,6 +41,29 @@ function formatDate(iso: string | null) {
 }
 
 const BENEFITS = ['Sınırsız tarama geçmişi'];
+
+const TERMS_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+const PRIVACY_URL = 'https://burak383.github.io/paticare/gizlilik-politikasi.html';
+
+// App Store İnceleme Kuralları 3.1.2 (Auto-Renewable Subscriptions), satın
+// alma ekranında Kullanım Koşulları (EULA) ve Gizlilik Politikası'na
+// işlevsel bir bağlantı bulunmasını şart koşuyor. Kendi EULA'mız olmadığı
+// için Apple'ın standart EULA'sına bağlanıyoruz (App Store Connect'te App
+// Information > License Agreement alanı boş bırakıldığında geçerli olan
+// metin budur).
+function LegalLinks() {
+  return (
+    <View style={styles.legalLinks}>
+      <Pressable onPress={() => Linking.openURL(TERMS_URL)} testID="plus-terms-link">
+        <Text style={styles.legalLinkText}>Kullanım Koşulları</Text>
+      </Pressable>
+      <Text style={styles.legalLinksDivider}>·</Text>
+      <Pressable onPress={() => Linking.openURL(PRIVACY_URL)} testID="plus-privacy-link">
+        <Text style={styles.legalLinkText}>Gizlilik Politikası</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function BenefitsCard() {
   return (
@@ -236,7 +259,7 @@ export default function PlusScreen() {
             </Text>
             <Text style={styles.subtitle}>
               {isRevenueCatConfigured()
-                ? 'İstediğin zaman Google Play üzerinden iptal edebilirsin.'
+                ? `İstediğin zaman ${Platform.OS === 'ios' ? 'App Store' : 'Google Play'} üzerinden iptal edebilirsin.`
                 : 'İstediğin zaman iptal edebilirsin. Kart bilgisi istenmez.'}
             </Text>
           </View>
@@ -302,6 +325,7 @@ export default function PlusScreen() {
               </Pressable>
 
               <BenefitsCard />
+              <LegalLinks />
             </>
           ) : loadingPlans ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
@@ -432,6 +456,9 @@ const styles = StyleSheet.create({
   benefitList: { gap: 10, marginTop: 12 },
   benefitRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
   benefitText: { color: colors.foreground, fontFamily: fonts.body, fontSize: 14, fontWeight: '600' },
+  legalLinks: { alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 20 },
+  legalLinkText: { color: colors.mutedForeground, fontFamily: fonts.body, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
+  legalLinksDivider: { color: colors.mutedForeground, fontSize: 12 },
   demoBox: { backgroundColor: colors.muted, borderRadius: 12, marginTop: 20, padding: 14 },
   demoLabel: { color: colors.mutedForeground, fontFamily: fonts.body, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
   demoText: { color: colors.mutedForeground, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 6 },
