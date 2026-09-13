@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -22,6 +21,7 @@ import { colors, fonts } from '../theme';
 import { usePets } from '../context/PetContext';
 import { careItemsApi, productsApi, type Product, type PriceNote } from '../api';
 import { todayISO } from '../dateUtils';
+import ProductImage from '../components/ProductImage';
 import type { RootStackParamList } from '../navigation/types';
 
 const radius = 16;
@@ -245,7 +245,7 @@ export default function ProductAnalysisScreen() {
             </View>
 
             <View style={styles.productImageWrap}>
-              <Image source={{ uri: product.imageUrl }} resizeMode="contain" style={styles.productImage} />
+              <ProductImage imageUrl={product.imageUrl} category={product.category} style={styles.productImage} iconSize={32} />
             </View>
 
             <View style={styles.productDetails}>

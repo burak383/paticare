@@ -24,6 +24,7 @@ import { usePets } from '../context/PetContext';
 import { useAuth } from '../context/AuthContext';
 import { hasPlusAccess } from '../subscription';
 import { captureProductPhoto } from '../media';
+import ProductImage from '../components/ProductImage';
 import { productsApi, type Product, type SafetyAnalysis, type ScanHistoryEntry } from '../api';
 import type { RootStackParamList, MainTabParamList } from '../navigation/types';
 
@@ -100,6 +101,26 @@ export default function ScanScreen() {
   const [hiddenScanCount, setHiddenScanCount] = useState(0);
   const [scanning, setScanning] = useState(false);
   const [refreshingHistory, setRefreshingHistory] = useState(false);
+
+  // Sunucuda GOOGLE_VISION_API_KEY gerçekten ayarlandıysa "DEMO" rozeti ve
+  // açıklaması gizlenir (bkz. backend/src/routes/products.js'teki
+  // /scan-config). Yapılandırılmamışsa (varsayılan) true/false hatası
+  // olmasın diye başlangıçta null tutulup rozet/açıklama gösterilir.
+  const [visionConfigured, setVisionConfigured] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    productsApi
+      .getScanConfig()
+      .then((configured) => {
+        if (!cancelled) setVisionConfigured(configured);
+      })
+      .catch(() => {
+        if (!cancelled) setVisionConfigured(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadHistory = useCallback(async () => {
     if (!selectedPet) return;
@@ -238,9 +259,11 @@ export default function ScanScreen() {
                 </Text>
               </View>
             </View>
-            <View style={styles.demoBadge} testID="scan-demo-badge">
-              <Text style={styles.demoBadgeText}>DEMO</Text>
-            </View>
+            {visionConfigured === false ? (
+              <View style={styles.demoBadge} testID="scan-demo-badge">
+                <Text style={styles.demoBadgeText}>DEMO</Text>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.scanArea}>
@@ -295,7 +318,7 @@ export default function ScanScreen() {
                 ) : (
                   results.map((product) => (
                     <Pressable key={product.id} style={styles.searchResultRow} onPress={() => openProduct(product.id)}>
-                      <Image source={{ uri: product.imageUrl }} style={styles.searchResultImage} />
+                      <ProductImage imageUrl={product.imageUrl} category={product.category} style={styles.searchResultImage} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.searchResultName} numberOfLines={1}>{product.name}</Text>
                         <Text style={styles.searchResultMeta}>{product.brand} · {product.category}</Text>
@@ -322,15 +345,16 @@ export default function ScanScreen() {
 
           {tab === 'camera' ? (
             <>
-              <View style={styles.demoBox} testID="scan-demo-disclosure">
-                <Text style={styles.demoLabel}>DEMO MODU</Text>
-                <Text style={styles.demoText}>
-                  "Tara" butonu gerçek bir kamera fotoğrafı çeker ve sunucuya gönderir. Sunucuda Google Cloud Vision
-                  yapılandırıldıysa etiketteki yazı gerçekten okunup demo ürün veritabanıyla eşleştirilir; henüz
-                  yapılandırılmadıysa ya da eşleşme bulunamazsa örnek bir ürün gösterilir. Ürün veritabanının kendisi
-                  hâlâ gerçek bir katalog değil, sınırlı sayıda örnek üründen oluşuyor.
-                </Text>
-              </View>
+              {visionConfigured === false ? (
+                <View style={styles.demoBox} testID="scan-demo-disclosure">
+                  <Text style={styles.demoLabel}>DEMO MODU</Text>
+                  <Text style={styles.demoText}>
+                    "Tara" butonu gerçek bir kamera fotoğrafı çeker ve sunucuya gönderir. Sunucuda Google Cloud Vision
+                    yapılandırıldıysa etiketteki yazı gerçekten okunup ürün veritabanıyla eşleştirilir; henüz
+                    yapılandırılmadıysa ya da eşleşme bulunamazsa örnek bir ürün gösterilir.
+                  </Text>
+                </View>
+              ) : null}
 
               <View style={styles.section}>
                 <View style={styles.sectionHeading}>
@@ -351,7 +375,7 @@ export default function ScanScreen() {
                       style={styles.recentCard}
                       onPress={() => entry.product && openProduct(entry.product.id)}
                     >
-                      <Image source={{ uri: entry.product?.imageUrl }} style={styles.productImage} />
+                      <ProductImage imageUrl={entry.product?.imageUrl} category={entry.product?.category} style={styles.productImage} />
                       <View style={styles.recentCopy}>
                         <Text numberOfLines={2} style={styles.cardTitle}>{entry.product?.name}</Text>
                         <Text style={styles.mutedText}>

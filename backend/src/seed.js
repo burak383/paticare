@@ -290,8 +290,182 @@ function seed() {
     resultSummary: 'Güvenlik sonucu hazır',
   });
 
+  seedExtraCatalog();
+
   db.persistNow();
   console.log('Örnek veriler yüklendi.');
+}
+
+// Yukarıdaki 3 ürün (OmegaPet 3, PatiPlus Adult Salmon, NexGard Combo) gerçek
+// bir görsele sahip — bu genişletilmiş katalogdaki ürünlerin görseli yok
+// (bkz. mobile/src/components/ProductImage.tsx'teki not: gerçek marka
+// fotoğraflarını izinsiz kullanmamak için kategoriye göre ikon gösteriliyor).
+// Dozaj/etken madde bilgileri genel bilinen, kamuya açık bilgilere dayanıyor
+// ve genel bir rehber niteliğinde — gerçek kullanım için her zaman ürün
+// ambalajı/veteriner önerisi esas alınmalı (bkz. aşağıdaki genel uyarı).
+const VET_GUIDANCE_WARNING =
+  'Bu bilgi genel bir rehber niteliğindedir; gerçek dozaj için ürün ambalajını ve veteriner hekiminizin önerisini esas alın.';
+
+function seedExtraCatalog() {
+  let barcodeSeq = 1000;
+  const nextBarcode = () => `869${String(barcodeSeq++).padStart(10, '0')}`;
+
+  const catFood = [
+    ['Royal Canin', 'Indoor Adult Kedi Maması', 'Ev kedileri için düşük kalorili, hairball kontrollü kuru mama.'],
+    ['Royal Canin', 'Kitten Yavru Kedi Maması', '4-12 aylık yavru kediler için büyüme dönemine özel formül.'],
+    ["Hill's Science Diet", 'Adult Kedi Maması', 'Dengeli protein ve lif içeren yetişkin kedi maması.'],
+    ['Purina Pro Plan', 'Adult Sterilised Kedi Maması', 'Kısırlaştırılmış kediler için kilo kontrolüne destek formülü.'],
+    ['Purina ONE', 'Adult Kedi Maması', 'Tavuklu, günlük beslenme için dengeli kuru mama.'],
+    ['Whiskas', 'Adult Kuru Kedi Maması', 'Somonlu, yetişkin kediler için günlük kuru mama.'],
+    ['Felix', 'Kuru Kedi Maması', 'Ekonomik, günlük besleme için karışık lezzetli kuru mama.'],
+    ['Proline', 'Adult Cat Kuru Mama', 'Yerli üretim, tavuklu yetişkin kedi maması.'],
+    ['N&D', 'Natural & Delicious Cat', 'Tahılsız, düşük glisemik kuru kedi maması.'],
+    ['Acana', 'Wild Prairie Cat', 'Yüksek et oranlı, tahılsız kuru kedi maması.'],
+  ];
+
+  const dogFood = [
+    ['Royal Canin', 'Medium Adult Köpek Maması', 'Orta ırk yetişkin köpekler için eklem desteği içeren formül.'],
+    ['Royal Canin', 'Puppy Yavru Köpek Maması', 'Yavru köpeklerin büyüme dönemine özel dengeli formül.'],
+    ["Hill's Science Diet", 'Adult Köpek Maması', 'Kas kütlesini korumaya destek dengeli protein formülü.'],
+    ['Purina Pro Plan', 'Adult Medium Köpek Maması', 'Sindirim sağlığını destekleyen prebiyotik içerikli formül.'],
+    ['Purina ONE', 'Adult Köpek Maması', 'Tavuklu, günlük beslenme için dengeli kuru mama.'],
+    ['Pedigree', 'Adult Kuru Köpek Maması', 'Yetişkin köpekler için günlük dengeli besleme.'],
+    ['Proline', 'Adult Dog Kuru Mama', 'Yerli üretim, tavuklu yetişkin köpek maması.'],
+    ['N&D', 'Natural & Delicious Dog', 'Tahılsız, düşük glisemik kuru köpek maması.'],
+    ['Acana', 'Heritage Adult Dog', 'Yüksek et oranlı, tahılsız kuru köpek maması.'],
+    ['Brit Care', 'Adult Dog Lamb & Rice', 'Kuzu etli, hassas mideler için hipoalerjenik formül.'],
+  ];
+
+  const wetFood = [
+    ['Whiskas', 'Yaş Mama Pouch Somon', 'Sos içinde somonlu yaş kedi maması.'],
+    ['Felix', 'Yaş Mama Kutu Karışık', 'Jöle içinde karışık etli yaş kedi maması.'],
+    ['Royal Canin', 'Yaş Mama Pouch Kitten', 'Yavru kediler için sos içinde yaş mama.'],
+    ['Pedigree', 'Yaş Mama Pouch Köpek', 'Sos içinde etli parçalar halinde yaş köpek maması.'],
+    ["Hill's Science Diet", 'Yaş Mama Konserve Köpek', 'Dengeli, yumuşak dokulu yaş köpek maması.'],
+    ['Purina Pro Plan', 'Yaş Mama Pouch Kedi', 'Sos içinde parçalar halinde yaş kedi maması.'],
+  ];
+
+  const treats = [
+    ['Pedigree', 'Dentastix Günlük Diş Bakım Ödülü', 'Diş taşı oluşumunu azaltmaya yardımcı çiğneme ödülü.'],
+    ['Purina', 'Dentalife Kedi Ödülü', 'Ağız sağlığını destekleyen çıtır ödül.'],
+    ['Whiskas', 'Temptations Kedi Ödülü', 'Çıtır dış, yumuşak iç dokulu ödül maması.'],
+    ['Royal Canin', 'Eğitim Ödülü Köpek', 'Düşük kalorili, eğitim sırasında kullanılabilecek ödül.'],
+    ['Trixie', 'Doğal Tavuk Şeridi Köpek Ödülü', 'Tek içerikli, katkısız doğal tavuk ödülü.'],
+  ];
+
+  const supplements = [
+    ['VetLife', 'JointCare Glucosamine Tablet', 'Eklem sağlığını desteklemek için glukozamin/kondroitin takviyesi.', [
+      { name: 'Glukozamin', amount: '250 mg', omega3Mg: 0 },
+      { name: 'Kondroitin sülfat', amount: '200 mg', omega3Mg: 0 },
+    ]],
+    ['8in1', 'Excel Multi Vitamin Köpek', 'Günlük vitamin-mineral ihtiyacını desteklemeye yönelik tablet.', [
+      { name: 'A vitamini', amount: '500 IU', omega3Mg: 0 },
+      { name: 'D3 vitamini', amount: '50 IU', omega3Mg: 0 },
+    ]],
+    ['Beaphar', 'Kedi Otu Vitamin Macunu', 'Tüy yumağı ve iştah desteği için vitaminli macun.', [
+      { name: 'Malt ekstresi', amount: '1 g', omega3Mg: 0 },
+      { name: 'Taurin', amount: '20 mg', omega3Mg: 0 },
+    ]],
+    ['Nutri-Vet', 'Salmon Oil Balık Yağı', 'Cilt ve tüy sağlığı için sıvı somon yağı takviyesi.', [
+      { name: 'Somon yağı', amount: '1 ml', omega3Mg: 220 },
+      { name: 'EPA', amount: '80 mg', omega3Mg: 80 },
+    ]],
+    ['Zesty Paws', 'Probiotic Bites Köpek', 'Sindirim florasını desteklemeye yönelik probiyotik çiğneme tableti.', [
+      { name: 'Probiyotik kültür karışımı', amount: '1 milyar CFU', omega3Mg: 0 },
+      { name: 'Prebiyotik lif', amount: '150 mg', omega3Mg: 0 },
+    ]],
+    ['VetLife', 'CalciBoost Kalsiyum Tableti', 'Büyüme dönemindeki yavrular için kalsiyum-fosfor desteği.', [
+      { name: 'Kalsiyum', amount: '300 mg', omega3Mg: 0 },
+      { name: 'Fosfor', amount: '150 mg', omega3Mg: 0 },
+    ]],
+  ];
+
+  const parasitics = [
+    ['Boehringer Ingelheim', 'Frontline Combo Kedi', 'Pire ve kenelere karşı aylık spot-on damla.', [
+      { name: 'Fipronil', amount: '50 mg', omega3Mg: 0 },
+      { name: 'S-metopren', amount: '60 mg', omega3Mg: 0 },
+    ]],
+    ['MSD Animal Health', 'Bravecto Çiğnenebilir Tablet Köpek', '12 haftaya kadar pire/kene koruması sağlayan çiğneme tableti.', [
+      { name: 'Fluralaner', amount: '250 mg', omega3Mg: 0 },
+    ]],
+    ['Elanco', 'Advantix Spot-On Köpek', 'Pire, kene ve sivrisineklere karşı aylık damla.', [
+      { name: 'İmidakloprid', amount: '100 mg', omega3Mg: 0 },
+      { name: 'Permetrin', amount: '500 mg', omega3Mg: 0 },
+    ]],
+    ['Elanco', 'Milbemax Tablet Kedi', 'İç parazitlere (yuvarlak/şerit kurt) karşı tablet.', [
+      { name: 'Milbemisin oksim', amount: '16 mg', omega3Mg: 0 },
+      { name: 'Prazikuantel', amount: '40 mg', omega3Mg: 0 },
+    ]],
+    ['Bayer', 'Drontal Plus Tablet Köpek', 'Geniş spektrumlu iç parazit (solucan) tableti.', [
+      { name: 'Prazikuantel', amount: '50 mg', omega3Mg: 0 },
+      { name: 'Pirantel', amount: '144 mg', omega3Mg: 0 },
+    ]],
+    ['Boehringer Ingelheim', 'NexGard Spectra Köpek', 'Pire, kene ve kalp kurduna karşı aylık çiğneme tableti.', [
+      { name: 'Afoksolaner', amount: '11.3 mg', omega3Mg: 0 },
+      { name: 'Milbemisin oksim', amount: '2.25 mg', omega3Mg: 0 },
+    ]],
+  ];
+
+  const simpleFood = (brand, name, summary) => ({
+    brand,
+    name,
+    category: 'Mama',
+    aiSummary: summary,
+    doseTitle: 'Günlük önerilen porsiyon ambalaj üzerindeki tabloya göre',
+    doseNote: 'Ana öğün',
+    ingredients: [],
+    warnings: [],
+    interactsWith: [],
+  });
+
+  const simpleTreat = (brand, name, summary) => ({
+    brand,
+    name,
+    category: 'Ödül',
+    aiSummary: summary,
+    doseTitle: 'Günlük ödül payının bir parçası olarak',
+    doseNote: 'Ana öğünün yerine geçmez',
+    ingredients: [],
+    warnings: ['Günlük kalori ihtiyacının küçük bir bölümünü oluşturmalı, ana beslenmenin yerini almamalıdır.'],
+    interactsWith: [],
+  });
+
+  const supplementProduct = (brand, name, summary, ingredients) => ({
+    brand,
+    name,
+    category: 'Vitamin ve takviye',
+    aiSummary: summary,
+    doseTitle: 'Ambalaj üzerindeki kiloya göre dozaj tablosuna bakın',
+    doseNote: 'Mama ile birlikte',
+    ingredients,
+    warnings: [VET_GUIDANCE_WARNING],
+    interactsWith: [],
+  });
+
+  const parasiticProduct = (brand, name, summary, ingredients) => ({
+    brand,
+    name,
+    category: 'Parazit koruması',
+    aiSummary: summary,
+    doseTitle: 'Kiloya göre dozaj için ambalajı kontrol edin',
+    doseNote: 'Veteriner önerisiyle düzenli aralıklarla uygulanır',
+    ingredients,
+    warnings: [VET_GUIDANCE_WARNING, 'Gebe/emzikli hayvanlarda ve hasta bireylerde kullanmadan önce veterinerinize danışın.'],
+    interactsWith: [],
+  });
+
+  const all = [
+    ...catFood.map(([b, n, s]) => simpleFood(b, n, s)),
+    ...dogFood.map(([b, n, s]) => simpleFood(b, n, s)),
+    ...wetFood.map(([b, n, s]) => ({ ...simpleFood(b, n, s), category: 'Yaş mama' })),
+    ...treats.map(([b, n, s]) => simpleTreat(b, n, s)),
+    ...supplements.map(([b, n, s, ing]) => supplementProduct(b, n, s, ing)),
+    ...parasitics.map(([b, n, s, ing]) => parasiticProduct(b, n, s, ing)),
+  ];
+
+  all.forEach((product) => {
+    db.insert('products', { id: nanoid(), barcode: nextBarcode(), ...product });
+  });
 }
 
 module.exports = seed;

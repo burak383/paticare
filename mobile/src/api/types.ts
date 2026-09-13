@@ -130,7 +130,9 @@ export type Product = {
   brand: string;
   name: string;
   category: string;
-  imageUrl: string;
+  // Katalogdaki her ürünün gerçek bir fotoğrafı yok — boş olduğunda
+  // ProductImage bileşeni kategoriye uygun bir ikon gösterir.
+  imageUrl?: string;
   aiSummary: string;
   doseTitle: string;
   doseNote: string;
