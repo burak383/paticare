@@ -11,8 +11,11 @@ const mockDeleteCondition = jest.fn();
 const mockAddVetNote = jest.fn();
 const mockUpdateVetNote = jest.fn();
 const mockDeleteVetNote = jest.fn();
+const mockNavigate = jest.fn();
+const mockUseAuth = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ navigate: mockNavigate }),
   useFocusEffect: (callback: () => void | (() => void)) => {
     const ReactActual = require('react');
     ReactActual.useEffect(() => {
@@ -21,6 +24,18 @@ jest.mock('@react-navigation/native', () => ({
     }, []);
   },
 }));
+
+jest.mock('../context/AuthContext', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+const activeSubscription = {
+  plan: 'monthly' as const,
+  status: 'active' as const,
+  trialEndsAt: null,
+  canceledAt: null,
+  trialUsed: true,
+};
 
 jest.mock('../api', () => ({
   healthApi: {
@@ -61,6 +76,7 @@ jest.mock('../context/PetContext', () => ({
 describe('HealthRecordScreen — Kayıt ekle (add vaccine) button', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [], vetNotes: [] });
     mockAddVaccine.mockResolvedValue({ id: 'vac-1', petId: 'pet-1', title: 'Kuduz rapeli', date: '2026-09-01', status: 'upcoming', clinic: null });
     mockAddCondition.mockResolvedValue({ id: 'cond-1', petId: 'pet-1', title: 'Mevsimsel alerji', note: '', date: '2026-08-28' });
@@ -105,6 +121,7 @@ describe('HealthRecordScreen — Kayıt ekle (add vaccine) button', () => {
 describe('HealthRecordScreen — Rahatsızlıklar (conditions)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [], vetNotes: [] });
     mockAddCondition.mockResolvedValue({ id: 'cond-1', petId: 'pet-1', title: 'Mevsimsel alerji', note: 'Bahar aylarında kaşınma.', date: '2026-08-28' });
   });
@@ -147,6 +164,7 @@ describe('HealthRecordScreen — Rahatsızlıklar (conditions)', () => {
 describe('HealthRecordScreen — Veteriner notları (vet notes)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [], vetNotes: [] });
     mockAddVetNote.mockResolvedValue({ id: 'note-1', petId: 'pet-1', vetName: 'Dr. Ayşe Yıldız', date: '2026-08-28', note: 'Kontrol normal.' });
   });
@@ -191,6 +209,7 @@ describe('HealthRecordScreen — aşı kaydını sil (delete vaccine)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [mockVaccine], weightLogs: [], conditions: [], vetNotes: [] });
     mockDeleteVaccine.mockResolvedValue(undefined);
   });
@@ -217,6 +236,7 @@ describe('HealthRecordScreen — rahatsızlığı düzenle/sil (edit/delete cond
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [mockCondition], vetNotes: [] });
     mockUpdateCondition.mockResolvedValue({ ...mockCondition, title: 'Mevsimsel alerji (güncel)', note: 'Kontrol altında.' });
     mockDeleteCondition.mockResolvedValue(undefined);
@@ -268,6 +288,7 @@ describe('HealthRecordScreen — veteriner notunu düzenle/sil (edit/delete vet 
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [], vetNotes: [mockVetNote] });
     mockUpdateVetNote.mockResolvedValue({ ...mockVetNote, note: 'Takipte, iyileşiyor.' });
     mockDeleteVetNote.mockResolvedValue(undefined);
@@ -321,6 +342,7 @@ describe('HealthRecordScreen — veteriner notunu düzenle/sil (edit/delete vet 
 describe('HealthRecordScreen — pull-to-refresh', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: activeSubscription } });
     mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [], vetNotes: [] });
   });
 
@@ -334,5 +356,26 @@ describe('HealthRecordScreen — pull-to-refresh', () => {
     });
 
     await waitFor(() => expect(mockFetchPetHealth).toHaveBeenCalledWith('pet-1'));
+  });
+});
+
+describe('HealthRecordScreen — Plus erişimi', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFetchPetHealth.mockResolvedValue({ pet: mockPet, vaccines: [], weightLogs: [], conditions: [], vetNotes: [] });
+  });
+
+  it('abonelik/deneme yoksa tüm ekranın yerine PlusGate gösterilir ve yükseltme PatiCarePlus\'a yönlendirir', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false } },
+    });
+
+    const { getByTestId, queryByTestId } = await render(<HealthRecordScreen />);
+
+    await waitFor(() => expect(getByTestId('plus-gate')).toBeTruthy());
+    expect(queryByTestId('add-vaccine-button')).toBeNull();
+
+    await fireEvent.press(getByTestId('plus-gate-upgrade-button'));
+    expect(mockNavigate).toHaveBeenCalledWith('PatiCarePlus');
   });
 });

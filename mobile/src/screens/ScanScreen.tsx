@@ -25,6 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { hasPlusAccess } from '../subscription';
 import { captureProductPhoto } from '../media';
 import ProductImage from '../components/ProductImage';
+import PlusGate from '../components/PlusGate';
 import { productsApi, type Product, type SafetyAnalysis, type ScanHistoryEntry } from '../api';
 import type { RootStackParamList, MainTabParamList } from '../navigation/types';
 
@@ -93,12 +94,11 @@ export default function ScanScreen() {
   }
 
   // --- Recent scans ---
-  // The Plus card on ProfileScreen promises "Sınırsız tarama geçmişi"
-  // (unlimited scan history) — this is the one real, checkable difference
-  // between free and Plus, so free accounts are capped at 3 here.
-  const RECENT_SCANS_LIMIT = 3;
+  // Bu ekranın tamamı artık plusAccess olmayan kullanıcılar için hiç
+  // render edilmiyor (yukarıdaki PlusGate erken dönüşüne bkz.), yani buraya
+  // ulaşan her kullanıcının zaten Plus erişimi var — geçmiş her zaman
+  // eksiksiz gösteriliyor.
   const [recentScans, setRecentScans] = useState<ScanHistoryEntry[]>([]);
-  const [hiddenScanCount, setHiddenScanCount] = useState(0);
   const [scanning, setScanning] = useState(false);
   const [refreshingHistory, setRefreshingHistory] = useState(false);
 
@@ -126,17 +126,11 @@ export default function ScanScreen() {
     if (!selectedPet) return;
     try {
       const history = await productsApi.fetchScanHistory(selectedPet.id);
-      if (plusAccess) {
-        setRecentScans(history);
-        setHiddenScanCount(0);
-      } else {
-        setRecentScans(history.slice(0, RECENT_SCANS_LIMIT));
-        setHiddenScanCount(Math.max(0, history.length - RECENT_SCANS_LIMIT));
-      }
+      setRecentScans(history);
     } catch {
       // Non-critical — leave list empty on failure.
     }
-  }, [selectedPet, plusAccess]);
+  }, [selectedPet]);
 
   useFocusEffect(
     useCallback(() => {
@@ -224,6 +218,10 @@ export default function ScanScreen() {
   }
 
   const riskColor = analysis?.risk === 'high' ? colors.destructive : analysis?.risk === 'medium' ? colors.accent : colors.success;
+
+  if (!plusAccess) {
+    return <PlusGate onUpgrade={() => navigation.navigate('PatiCarePlus')} />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -386,19 +384,6 @@ export default function ScanScreen() {
                     </Pressable>
                   ))
                 )}
-
-                {hiddenScanCount > 0 ? (
-                  <Pressable
-                    style={styles.plusHintRow}
-                    onPress={() => navigation.navigate('PatiCarePlus')}
-                    testID="scan-history-plus-hint"
-                  >
-                    <Icon name="lock" size={14} color={colors.mutedForeground} />
-                    <Text style={styles.plusHintText}>
-                      {hiddenScanCount} tarama daha var · Plus ile sınırsız geçmiş gör
-                    </Text>
-                  </Pressable>
-                ) : null}
               </View>
 
               <Pressable
@@ -571,8 +556,6 @@ const styles = StyleSheet.create({
   productImage: { width: 56, height: 56, borderRadius: 12, backgroundColor: colors.input },
   recentCopy: { flex: 1 },
   cardTitle: { flex: 1, color: colors.foreground, fontFamily: fonts.body, fontSize: 14, fontWeight: '800' },
-  plusHintRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, padding: 12, borderRadius: 14, backgroundColor: colors.muted },
-  plusHintText: { flex: 1, color: colors.mutedForeground, fontFamily: fonts.body, fontSize: 12, fontWeight: '700' },
   securityPromo: { overflow: 'hidden', marginTop: 24, borderRadius: 16, backgroundColor: colors.secondary },
   securityImage: { width: '100%', height: 128 },
   promoCopy: { padding: 16 },

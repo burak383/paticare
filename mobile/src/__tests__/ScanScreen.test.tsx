@@ -67,7 +67,7 @@ describe('ScanScreen — search and scan button', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     mockUseRoute.mockReturnValue({ params: undefined });
-    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false } } });
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: 'monthly', status: 'active', trialEndsAt: null, canceledAt: null, trialUsed: true } } });
     mockFetchScanHistory.mockResolvedValue([]);
     mockSearchProducts.mockResolvedValue([
       { id: 'prod-1', brand: 'OmegaPet', name: 'OmegaPet 3', category: 'Vitamin ve takviye', imageUrl: '', aiSummary: '', doseTitle: '', doseNote: '', ingredients: [], warnings: [], interactsWith: [] },
@@ -134,7 +134,7 @@ describe('ScanScreen — Güvenlik sekmesi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false } } });
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: 'monthly', status: 'active', trialEndsAt: null, canceledAt: null, trialUsed: true } } });
     mockFetchScanHistory.mockResolvedValue([]);
     mockSearchProducts.mockResolvedValue([]);
   });
@@ -174,7 +174,7 @@ function makeScanHistory(count: number) {
   }));
 }
 
-describe('ScanScreen — PatiCare Plus tarama geçmişi', () => {
+describe('ScanScreen — Plus erişimi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -186,21 +186,20 @@ describe('ScanScreen — PatiCare Plus tarama geçmişi', () => {
     jest.useRealTimers();
   });
 
-  it('caps free accounts at 3 recent scans and shows a Plus hint for the rest', async () => {
+  it('abonelik/deneme yoksa tüm ekranın yerine PlusGate gösterilir ve yükseltme PatiCarePlus\'a yönlendirir', async () => {
     mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false } } });
     mockFetchScanHistory.mockResolvedValue(makeScanHistory(5));
 
-    const { getByTestId, findByText, queryByText } = await render(<ScanScreen />);
+    const { getByTestId, queryByText } = await render(<ScanScreen />);
 
-    await findByText('Ürün 0');
-    expect(queryByText('Ürün 3')).toBeNull();
-    await findByText('2 tarama daha var · Plus ile sınırsız geçmiş gör');
+    await waitFor(() => expect(getByTestId('plus-gate')).toBeTruthy());
+    expect(queryByText('Ürün 0')).toBeNull();
 
-    await fireEvent.press(getByTestId('scan-history-plus-hint'));
+    await fireEvent.press(getByTestId('plus-gate-upgrade-button'));
     expect(mockNavigate).toHaveBeenCalledWith('PatiCarePlus');
   });
 
-  it('shows unlimited scan history for a trialing Plus account, with no hint', async () => {
+  it('trialing bir Plus hesabı için tarama geçmişi eksiksiz gösterilir', async () => {
     mockUseAuth.mockReturnValue({
       user: { id: 'user-1', subscription: { plan: 'monthly', status: 'trialing', trialEndsAt: new Date(Date.now() + 86400000).toISOString(), canceledAt: null, trialUsed: true } },
     });
@@ -209,14 +208,14 @@ describe('ScanScreen — PatiCare Plus tarama geçmişi', () => {
     const { findByText, queryByTestId } = await render(<ScanScreen />);
 
     await findByText('Ürün 4');
-    expect(queryByTestId('scan-history-plus-hint')).toBeNull();
+    expect(queryByTestId('plus-gate')).toBeNull();
   });
 });
 
 describe('ScanScreen — pull-to-refresh', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false } } });
+    mockUseAuth.mockReturnValue({ user: { id: 'user-1', subscription: { plan: 'monthly', status: 'active', trialEndsAt: null, canceledAt: null, trialUsed: true } } });
     mockSearchProducts.mockResolvedValue([]);
     mockFetchScanHistory.mockResolvedValue([]);
   });

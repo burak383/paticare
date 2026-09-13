@@ -34,9 +34,18 @@ jest.mock('../notifications', () => ({
   scheduleCareItemReminder: (...args: unknown[]) => mockScheduleCareItemReminder(...args),
 }));
 
+const mockUseAuth = jest.fn();
 jest.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'user-1', preferences: { medicationReminders: true } } }),
+  useAuth: () => mockUseAuth(),
 }));
+
+const activeSubscription = {
+  plan: 'monthly' as const,
+  status: 'active' as const,
+  trialEndsAt: null,
+  canceledAt: null,
+  trialUsed: true,
+};
 
 const mockPet = {
   id: 'pet-1',
@@ -87,6 +96,9 @@ describe('HomeScreen — bugünün görevleri', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockListCareItems.mockResolvedValue([]);
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
   });
 
   it('shows the empty state when there are no tasks today', async () => {
@@ -182,5 +194,30 @@ describe('HomeScreen — bugünün görevleri', () => {
     await fireEvent.press(petCard);
 
     expect(mockSelectPet).toHaveBeenCalledWith('pet-1');
+  });
+});
+
+describe('HomeScreen — Plus erişimi', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockListCareItems.mockResolvedValue([]);
+  });
+
+  it('abonelik/deneme yoksa tüm ekranın yerine PlusGate gösterilir ve yükseltme PatiCarePlus\'a yönlendirir', async () => {
+    mockUseAuth.mockReturnValue({
+      user: {
+        id: 'user-1',
+        preferences: { medicationReminders: true },
+        subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false },
+      },
+    });
+
+    const { getByTestId, queryByText } = await render(<HomeScreen />);
+
+    await waitFor(() => expect(getByTestId('plus-gate')).toBeTruthy());
+    expect(queryByText('Ürün tara')).toBeNull();
+
+    await fireEvent.press(getByTestId('plus-gate-upgrade-button'));
+    expect(mockNavigate).toHaveBeenCalledWith('PatiCarePlus');
   });
 });

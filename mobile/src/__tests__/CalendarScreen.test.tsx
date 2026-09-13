@@ -14,8 +14,10 @@ const mockSkipCareItem = jest.fn();
 // calls working without each test having to stub these itself.
 const mockScheduleCareItemReminder = jest.fn().mockResolvedValue(null);
 const mockCancelCareItemReminder = jest.fn().mockResolvedValue(undefined);
+const mockNavigate = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ navigate: mockNavigate }),
   // Deps on [callback] (not []) so this re-fires whenever the screen's own
   // `load` identity changes (e.g. selectedDate changes after tapping a day
   // cell) — matching real useFocusEffect's behavior of re-running when its
@@ -62,9 +64,18 @@ jest.mock('../context/PetContext', () => ({
   usePets: () => ({ pets: [mockPet], selectedPet: mockPet, loading: false, refreshPets: jest.fn(), selectPet: jest.fn(), addPet: jest.fn(), updatePetLocal: jest.fn() }),
 }));
 
+const mockUseAuth = jest.fn();
 jest.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'user-1', preferences: { medicationReminders: true } } }),
+  useAuth: () => mockUseAuth(),
 }));
+
+const activeSubscription = {
+  plan: 'monthly' as const,
+  status: 'active' as const,
+  trialEndsAt: null,
+  canceledAt: null,
+  trialUsed: true,
+};
 
 jest.mock('../notifications', () => ({
   scheduleCareItemReminder: (...args: unknown[]) => mockScheduleCareItemReminder(...args),
@@ -74,6 +85,9 @@ jest.mock('../notifications', () => ({
 describe('CalendarScreen — add reminder (+) button', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
     mockListCareItems.mockResolvedValue([]);
     mockCreateCareItem.mockResolvedValue({
       id: 'ci-1',
@@ -148,6 +162,9 @@ describe('CalendarScreen — add reminder (+) button', () => {
 describe('CalendarScreen — Yaklaşanlar rows', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
     mockListCareItems.mockImplementation((params: { from?: string }) => {
       if (params?.from) {
         return Promise.resolve([
@@ -195,6 +212,9 @@ describe('CalendarScreen — Yaklaşanlar rows', () => {
 describe('CalendarScreen — timezone regression (UTC+ offsets, e.g. Türkiye)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
     mockListCareItems.mockResolvedValue([]);
   });
 
@@ -246,6 +266,9 @@ describe('CalendarScreen — edit reminder (pencil) button', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
     mockListCareItems.mockImplementation((params: { from?: string }) =>
       Promise.resolve(params?.from ? [] : [existingItem]),
     );
@@ -314,6 +337,9 @@ describe('CalendarScreen — recurring reminders (complete/skip spawns next occu
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
     mockScheduleCareItemReminder.mockResolvedValue(null);
     mockCancelCareItemReminder.mockResolvedValue(undefined);
   });
@@ -375,6 +401,9 @@ describe('CalendarScreen — recurring reminders (complete/skip spawns next occu
 describe('CalendarScreen — pull-to-refresh', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'user-1', preferences: { medicationReminders: true }, subscription: activeSubscription },
+    });
     mockListCareItems.mockResolvedValue([]);
   });
 
@@ -392,5 +421,30 @@ describe('CalendarScreen — pull-to-refresh', () => {
     });
 
     await waitFor(() => expect(mockListCareItems).toHaveBeenCalled());
+  });
+});
+
+describe('CalendarScreen — Plus erişimi', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockListCareItems.mockResolvedValue([]);
+  });
+
+  it('abonelik/deneme yoksa tüm ekranın yerine PlusGate gösterilir ve yükseltme PatiCarePlus\'a yönlendirir', async () => {
+    mockUseAuth.mockReturnValue({
+      user: {
+        id: 'user-1',
+        preferences: { medicationReminders: true },
+        subscription: { plan: null, status: 'none', trialEndsAt: null, canceledAt: null, trialUsed: false },
+      },
+    });
+
+    const { getByTestId, queryByTestId } = await render(<CalendarScreen />);
+
+    await waitFor(() => expect(getByTestId('plus-gate')).toBeTruthy());
+    expect(queryByTestId('add-reminder-button')).toBeNull();
+
+    await fireEvent.press(getByTestId('plus-gate-upgrade-button'));
+    expect(mockNavigate).toHaveBeenCalledWith('PatiCarePlus');
   });
 });

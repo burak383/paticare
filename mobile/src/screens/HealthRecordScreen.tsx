@@ -16,11 +16,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, fonts } from '../theme';
 import { usePets } from '../context/PetContext';
+import { useAuth } from '../context/AuthContext';
+import { hasPlusAccess } from '../subscription';
+import PlusGate from '../components/PlusGate';
 import { healthApi, type Condition, type VetNote, type Vaccine, type WeightLog } from '../api';
+import type { RootStackParamList } from '../navigation/types';
 
 const withAlpha = (color: string, alpha: string) => `${color}${alpha}`;
 
@@ -88,7 +93,9 @@ function WeightChart({ logs }: { logs: WeightLog[] }) {
 }
 
 export default function HealthRecordScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { selectedPet } = usePets();
+  const { user } = useAuth();
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [conditions, setConditions] = useState<Condition[]>([]);
@@ -355,6 +362,10 @@ export default function HealthRecordScreen() {
     } finally {
       setExporting(false);
     }
+  }
+
+  if (!hasPlusAccess(user?.subscription)) {
+    return <PlusGate onUpgrade={() => navigation.navigate('PatiCarePlus')} />;
   }
 
   if (!selectedPet) {

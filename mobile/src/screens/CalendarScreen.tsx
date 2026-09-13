@@ -14,14 +14,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, fonts } from '../theme';
 import { usePets } from '../context/PetContext';
 import { useAuth } from '../context/AuthContext';
+import { hasPlusAccess } from '../subscription';
+import PlusGate from '../components/PlusGate';
 import { careItemsApi, type CareItem, type CareItemKind } from '../api';
 import { scheduleCareItemReminder, cancelCareItemReminder } from '../notifications';
 import { toISODate } from '../dateUtils';
+import type { RootStackParamList } from '../navigation/types';
 
 const DAY_LABELS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 const MONTH_LABELS = [
@@ -83,6 +87,7 @@ const KIND_LABELS: { key: CareItemKind; label: string }[] = [
 const RECURRENCE_LABELS = ['Bir kez', 'Her gün', 'Haftalık', 'Aylık'];
 
 export default function CalendarScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { pets, selectedPet, selectPet } = usePets();
   const { user } = useAuth();
   const remindersEnabled = user?.preferences?.medicationReminders !== false;
@@ -314,6 +319,10 @@ export default function CalendarScreen() {
     ? `${week[0].getDate()}–${week[6].getDate()} ${MONTH_LABELS[week[6].getMonth()]}`
     : '';
   const selectedDayLabel = `${selectedDate.getDate()} ${MONTH_LABELS[selectedDate.getMonth()]} ${DAY_LABELS[selectedDate.getDay()] === 'Paz' ? 'Pazar' : ''}`.trim();
+
+  if (!hasPlusAccess(user?.subscription)) {
+    return <PlusGate onUpgrade={() => navigation.navigate('PatiCarePlus')} />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>

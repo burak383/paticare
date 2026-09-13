@@ -18,6 +18,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, fonts } from '../theme';
 import { usePets } from '../context/PetContext';
 import { useAuth } from '../context/AuthContext';
+import { hasPlusAccess } from '../subscription';
+import PlusGate from '../components/PlusGate';
 import { careItemsApi, type CareItem } from '../api';
 import { cancelCareItemReminder, scheduleCareItemReminder } from '../notifications';
 import { todayISO } from '../dateUtils';
@@ -127,6 +129,10 @@ export default function HomeScreen() {
   const doneCount = careItems.filter((c) => c.status === 'done').length;
   const totalCount = careItems.length;
   const progressRatio = totalCount > 0 ? doneCount / totalCount : 0;
+
+  if (!hasPlusAccess(user?.subscription)) {
+    return <PlusGate onUpgrade={() => navigation.navigate('PatiCarePlus')} />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
