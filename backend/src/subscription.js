@@ -46,6 +46,24 @@ const DEFAULT_SUBSCRIPTION = {
   trialUsed: false,
 };
 
+// Yeni bir hesap (e-posta/şifre kaydı ya da Google/Apple ile ilk giriş)
+// oluşturulduğunda başlangıç aboneliği olarak kullanılır — TÜM özellikler
+// PlusGate ile kilitlendiği için (bkz. mobile/src/components/PlusGate.tsx),
+// DEFAULT_SUBSCRIPTION'ın 'none' durumuyla kayıt olan bir kullanıcı hiçbir şey
+// yapamadan uygulamanın kilitli halini görürdü — App Store incelemesinde de
+// aynı sorun yaşanır. Bunun yerine her yeni hesap otomatik olarak 7 günlük
+// deneme ile başlıyor; trialUsed: true olduğu için /start-trial'dan ikinci
+// bir deneme almaları engelleniyor (tek kullanıcı = tek ücretsiz deneme).
+function startingSubscription() {
+  return {
+    ...DEFAULT_SUBSCRIPTION,
+    plan: 'yearly', // PlusScreen'deki varsayılan seçili plan ile tutarlı — yalnızca görüntü amaçlı, gerçek faturalama trialEndsAt sonrasında RevenueCat üzerinden başlar.
+    status: 'trialing',
+    trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+    trialUsed: true,
+  };
+}
+
 // Trial/subscription expiry is checked lazily (same pattern as the
 // password-reset code TTL in auth.js) instead of via a background job —
 // cheap, and correct as long as every read goes through this function.
@@ -73,4 +91,12 @@ function hasPlusAccess(sub) {
   return derived.status === 'trialing' || derived.status === 'canceled' || derived.status === 'active';
 }
 
-module.exports = { TRIAL_DAYS, PLANS, DEFAULT_SUBSCRIPTION, deriveSubscription, hasPlusAccess, planIdForProductId };
+module.exports = {
+  TRIAL_DAYS,
+  PLANS,
+  DEFAULT_SUBSCRIPTION,
+  startingSubscription,
+  deriveSubscription,
+  hasPlusAccess,
+  planIdForProductId,
+};

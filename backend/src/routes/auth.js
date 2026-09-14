@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { nanoid } = require('nanoid');
 const db = require('../db');
 const { signToken, requireAuth } = require('../middleware/auth');
-const { DEFAULT_SUBSCRIPTION, deriveSubscription } = require('../subscription');
+const { startingSubscription, deriveSubscription } = require('../subscription');
 const { sendPasswordResetEmail, isEmailConfigured } = require('../email');
 const { isAppleAuthConfigured, verifyAppleIdToken } = require('../appleAuth');
 
@@ -69,7 +69,7 @@ router.post('/register', (req, res) => {
     authProvider: 'password',
     avatarUrl: null,
     preferences: { ...DEFAULT_PREFERENCES },
-    subscription: { ...DEFAULT_SUBSCRIPTION },
+    subscription: startingSubscription(),
     privacyAcceptedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
   };
@@ -323,7 +323,7 @@ router.post('/social', async (req, res) => {
       authProvider: provider,
       avatarUrl,
       preferences: { ...DEFAULT_PREFERENCES },
-      subscription: { ...DEFAULT_SUBSCRIPTION },
+      subscription: startingSubscription(),
       createdAt: new Date().toISOString(),
     };
     db.insert('users', user);
