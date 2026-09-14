@@ -146,7 +146,6 @@ export default function OnboardingScreen() {
     user,
     login,
     register,
-    continueAsGuest,
     error: authError,
     forgotPassword,
     resetPassword,
@@ -369,17 +368,6 @@ export default function OnboardingScreen() {
     setNewPassword('');
   }
 
-  async function handleGuestPress() {
-    setAuthBusy(true);
-    try {
-      await continueAsGuest();
-    } catch (err) {
-      Alert.alert('Hata', err instanceof Error ? err.message : 'Misafir girişi başarısız.');
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
   async function handlePickPortrait() {
     setPickingPhoto(true);
     try {
@@ -397,14 +385,14 @@ export default function OnboardingScreen() {
       Alert.alert('İsim gerekli', `${species} dostunun adını girer misin?`);
       return;
     }
+    if (!user) {
+      // Misafir girişi kaldırıldı — bakım dosyası oluşturmadan önce gerçek bir
+      // hesabın (e-posta/Google/Apple) olması gerekiyor.
+      Alert.alert('Önce giriş yap', 'Bakım dosyası oluşturmadan önce yukarıdan bir hesapla giriş yapmalısın.');
+      return;
+    }
     setCreating(true);
     try {
-      if (!user) {
-        // No session yet (user skipped the auth buttons entirely) — start as guest
-        // so the pet record has an owner. If they already logged in/registered or
-        // continued as guest above, `user` is already set and we keep that session.
-        await continueAsGuest();
-      }
       const numericWeight = Number(weight.replace(',', '.'));
       await addPet({
         name: petName.trim(),
@@ -437,19 +425,7 @@ export default function OnboardingScreen() {
             </View>
             <Text style={styles.brandName}>PatiCare</Text>
           </View>
-          <Pressable
-            style={styles.skipButton}
-            onPress={handleGuestPress}
-            disabled={authBusy}
-            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
-            testID="onboarding-skip-button"
-          >
-            {authBusy ? (
-              <ActivityIndicator size="small" color={colors.mutedForeground} />
-            ) : (
-              <Text style={styles.skipText}>Atla</Text>
-            )}
-          </Pressable>
+          <View style={{ width: 40 }} />
         </View>
 
         <View style={styles.heroSection}>
@@ -597,19 +573,6 @@ export default function OnboardingScreen() {
               ) : null}
             </View>
           )}
-
-          <RoundedButton style={styles.guestButton} onPress={handleGuestPress} disabled={authBusy}>
-            <Icon name="cellphone" size={17} color={colors.mutedForeground} />
-            <Text style={styles.guestText}>Misafir olarak devam et</Text>
-          </RoundedButton>
-
-          <View style={styles.infoBox}>
-            <Icon name="information-outline" size={16} color={colors.secondaryForeground} />
-            <Text style={styles.infoText}>
-              Misafir modunda kayıtların yalnızca bu cihazda tutulur. Daha sonra istediğin zaman hesap
-              oluşturabilirsin.
-            </Text>
-          </View>
         </View>
 
         <View style={styles.profileCard}>
@@ -833,8 +796,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   brandName: { color: colors.foreground, fontFamily: fonts.heading, fontSize: 16, fontWeight: '800' },
-  skipButton: { paddingHorizontal: 8, paddingVertical: 8 },
-  skipText: { color: colors.mutedForeground, fontFamily: fonts.body, fontSize: 12, fontWeight: '800' },
   heroSection: { marginTop: 28 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 },
   titleCopy: { flex: 1 },
@@ -902,19 +863,6 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: colors.primaryForeground, fontFamily: fonts.body, fontSize: 14, fontWeight: '800' },
   outlineButton: { height: 48, gap: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
   outlineButtonText: { color: colors.cardForeground, fontFamily: fonts.body, fontSize: 14, fontWeight: '800' },
-  guestButton: { height: 44, gap: 8, marginTop: 16, backgroundColor: colors.muted },
-  guestText: { color: colors.mutedForeground, fontFamily: fonts.body, fontSize: 12, fontWeight: '800' },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.secondary,
-  },
-  infoText: { flex: 1, color: colors.secondaryForeground, fontFamily: fonts.body, fontSize: 11, fontWeight: '600', lineHeight: 16 },
   profileCard: { marginTop: 24, padding: 20, borderRadius: 16, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.muted },
   profileHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   profileEyebrow: { color: colors.primary, fontFamily: fonts.body, fontSize: 12, fontWeight: '800', letterSpacing: 1.4 },

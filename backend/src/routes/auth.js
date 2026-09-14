@@ -91,24 +91,6 @@ router.post('/login', (req, res) => {
   res.json({ token, user: publicUser(user) });
 });
 
-router.post('/guest', (req, res) => {
-  const user = {
-    id: nanoid(),
-    email: `misafir-${nanoid(6)}@paticare.local`,
-    name: 'Misafir Kullanıcı',
-    passwordHash: null,
-    guest: true,
-    authProvider: 'guest',
-    avatarUrl: null,
-    preferences: { ...DEFAULT_PREFERENCES },
-    subscription: { ...DEFAULT_SUBSCRIPTION },
-    createdAt: new Date().toISOString(),
-  };
-  db.insert('users', user);
-  const token = signToken(user);
-  res.status(201).json({ token, user: publicUser(user) });
-});
-
 // POST /api/auth/upgrade { email, password, name? } — requires an auth token.
 // Turns the CALLER'S OWN guest account into a real, password-protected one by
 // attaching credentials to the same user record (same id), instead of the app

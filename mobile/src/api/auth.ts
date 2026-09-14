@@ -26,12 +26,6 @@ export async function register(email: string, password: string, name: string | u
   return res.user;
 }
 
-export async function continueAsGuest() {
-  const res = await apiRequest<AuthResponse>('/auth/guest', { method: 'POST', auth: false });
-  await setToken(res.token);
-  return res.user;
-}
-
 // Turns the CURRENT (guest) session into a real, password-protected account
 // in place — same user id, same pets/reminders/health records — instead of
 // logging out and registering separately, which creates a brand-new empty

@@ -4,7 +4,6 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 
 const mockLogin = jest.fn();
 const mockRegister = jest.fn();
-const mockContinueAsGuest = jest.fn();
 const mockForgotPassword = jest.fn();
 const mockResetPassword = jest.fn();
 const mockLoginWithGoogle = jest.fn();
@@ -38,7 +37,6 @@ const baseAuthValue = {
   user: null,
   login: (...args: unknown[]) => mockLogin(...args),
   register: (...args: unknown[]) => mockRegister(...args),
-  continueAsGuest: (...args: unknown[]) => mockContinueAsGuest(...args),
   error: null as string | null,
   forgotPassword: (...args: unknown[]) => mockForgotPassword(...args),
   resetPassword: (...args: unknown[]) => mockResetPassword(...args),
@@ -227,8 +225,9 @@ describe('OnboardingScreen — Face ID opt-in', () => {
 describe('OnboardingScreen — portre ekle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAuth.mockReturnValue(baseAuthValue);
-    mockContinueAsGuest.mockResolvedValue(undefined);
+    // Misafir girişi kaldırıldığı için bakım dosyası oluşturma artık zaten
+    // giriş yapılmış bir oturum gerektiriyor.
+    mockUseAuth.mockReturnValue({ ...baseAuthValue, user: { id: 'user-1', guest: false } });
     mockAddPet.mockResolvedValue({ id: 'pet-1', name: 'Ares' });
   });
 
@@ -262,51 +261,25 @@ describe('OnboardingScreen — portre ekle', () => {
   });
 });
 
-describe('OnboardingScreen — sağ üstteki "Atla" butonu', () => {
+describe('OnboardingScreen — misafir girişi kaldırıldı', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue(baseAuthValue);
   });
 
-  // Regresyon: kullanıcı gerçek cihazda bu butonun "çalışmadığını" bildirdi.
-  // Buradaki bağlanma (wiring) doğru çıktı — asıl sorun küçük dokunma alanı
-  // ve isteğin sürdüğü sırada hiçbir görsel geri bildirim olmamasıydı (bkz.
-  // OnboardingScreen.tsx'teki hitSlop + ActivityIndicator eklemesi). Bu test
-  // en azından mantığın bozulmadığını garanti eder.
-  it('misafir olarak devam eder ve istek sürerken meşgul göstergesi gösterir', async () => {
-    let resolveGuest: () => void = () => {};
-    mockContinueAsGuest.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveGuest = resolve;
-        }),
-    );
-
-    const { getByTestId, queryByText, findByText } = await render(<OnboardingScreen />);
-    // NOT awaited: mockContinueAsGuest's promise is deliberately left
-    // pending, so awaiting the press itself here would deadlock (RTL's
-    // fireEvent wraps the press in act() and won't settle until the
-    // in-flight handler does).
-    fireEvent.press(getByTestId('onboarding-skip-button'));
-
-    await waitFor(() => expect(mockContinueAsGuest).toHaveBeenCalledTimes(1));
-    // İstek sürerken "Atla" yazısı yerine bir yükleniyor göstergesi olmalı —
-    // yoksa yavaş bir bağlantıda kullanıcı butonun tepki vermediğini düşünüp
-    // tekrar tekrar basabilir.
-    await waitFor(() => expect(queryByText('Atla')).toBeNull());
-
-    resolveGuest();
-    await findByText('Atla');
-  });
-
-  it('misafir girişi başarısız olursa hata gösterir (sessizce yutmaz)', async () => {
+  // Misafir girişi tamamen kaldırıldı: oturum açılmadan bakım dosyası
+  // oluşturmaya çalışmak artık sessizce bir misafir hesabı açmak yerine
+  // kullanıcıyı önce giriş yapmaya yönlendirmeli.
+  it('oturum yoksa bakım dosyası oluşturmadan önce giriş yapmayı ister', async () => {
     const alertSpy = jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(() => {});
-    mockContinueAsGuest.mockRejectedValue(new Error('Ağ hatası.'));
 
     const { getByTestId } = await render(<OnboardingScreen />);
-    await fireEvent.press(getByTestId('onboarding-skip-button'));
+    await fireEvent.press(getByTestId('create-care-file-button'));
 
-    await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Hata', 'Ağ hatası.'));
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith('Önce giriş yap', expect.any(String)),
+    );
+    expect(mockAddPet).not.toHaveBeenCalled();
     alertSpy.mockRestore();
   });
 });

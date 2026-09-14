@@ -22,7 +22,6 @@ type AuthContextValue = {
   // requires privacyAccepted: true, for the same reason as register() above
   // — this is the moment a guest becomes a real, identifiable account.
   upgradeGuestAccount: (email: string, password: string, name: string | undefined, privacyAccepted: boolean) => Promise<void>;
-  continueAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   // Lightweight alternative to refreshUser(): patches the in-memory user
@@ -150,17 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const continueAsGuest = useCallback(async () => {
-    setError(null);
-    try {
-      const u = await authApi.continueAsGuest();
-      setUser(u);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Misafir girişi başarısız.');
-      throw err;
-    }
-  }, []);
-
   const forgotPassword = useCallback(async (email: string) => {
     setError(null);
     try {
@@ -261,7 +249,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       upgradeGuestAccount,
-      continueAsGuest,
       logout,
       refreshUser: bootstrap,
       updateUser,
@@ -283,7 +270,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       upgradeGuestAccount,
-      continueAsGuest,
       logout,
       bootstrap,
       updateUser,
