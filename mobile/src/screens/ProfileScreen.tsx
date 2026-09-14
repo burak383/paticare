@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   Modal,
   Pressable,
   RefreshControl,
@@ -11,6 +12,7 @@ import {
   Switch,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -724,6 +726,7 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <Modal visible={addPetVisible} transparent animationType="slide" onRequestClose={() => setAddPetVisible(false)}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Yeni evcil hayvan ekle</Text>
@@ -735,6 +738,8 @@ export default function ProfileScreen() {
               placeholder="Örn. Zeytin"
               placeholderTextColor={colors.mutedForeground}
               testID="add-pet-name-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <Text style={styles.modalLabel}>Tür</Text>
             <View style={styles.speciesRow}>
@@ -754,9 +759,11 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <Modal visible={!!editingPet} transparent animationType="slide" onRequestClose={() => setEditingPet(null)}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{editingPet?.name} profilini düzenle</Text>
@@ -790,6 +797,8 @@ export default function ProfileScreen() {
               onChangeText={setEditName}
               placeholderTextColor={colors.mutedForeground}
               testID="edit-pet-name-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <Text style={styles.modalLabel}>Kilo (kg)</Text>
             <TextInput
@@ -799,6 +808,8 @@ export default function ProfileScreen() {
               keyboardType="numeric"
               placeholderTextColor={colors.mutedForeground}
               testID="edit-pet-weight-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <View style={styles.modalActions}>
               <Pressable style={styles.modalCancel} onPress={() => setEditingPet(null)}>
@@ -822,9 +833,11 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <Modal visible={timeEditorVisible} transparent animationType="slide" onRequestClose={() => setTimeEditorVisible(false)}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Varsayılan hatırlatma saatleri</Text>
@@ -837,6 +850,8 @@ export default function ProfileScreen() {
               placeholderTextColor={colors.mutedForeground}
               keyboardType="numbers-and-punctuation"
               testID="reminder-time-morning-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <Text style={styles.modalLabel}>Akşam</Text>
             <TextInput
@@ -847,6 +862,8 @@ export default function ProfileScreen() {
               placeholderTextColor={colors.mutedForeground}
               keyboardType="numbers-and-punctuation"
               testID="reminder-time-evening-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <View style={styles.modalActions}>
               <Pressable style={styles.modalCancel} onPress={() => setTimeEditorVisible(false)}>
@@ -858,6 +875,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <Modal visible={soundPickerVisible} transparent animationType="slide" onRequestClose={() => setSoundPickerVisible(false)}>
@@ -1025,6 +1043,7 @@ export default function ProfileScreen() {
       </Modal>
 
       <Modal visible={upgradeVisible} transparent animationType="slide" onRequestClose={closeUpgradeModal}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Hesabını oluştur</Text>
@@ -1043,6 +1062,8 @@ export default function ProfileScreen() {
               placeholder="ornek@eposta.com"
               placeholderTextColor={colors.mutedForeground}
               testID="upgrade-email-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <Text style={styles.modalLabel}>Şifre</Text>
             <TextInput
@@ -1053,6 +1074,8 @@ export default function ProfileScreen() {
               placeholder="En az 6 karakter"
               placeholderTextColor={colors.mutedForeground}
               testID="upgrade-password-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
 
             <PrivacyConsentCheckbox
@@ -1072,6 +1095,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <Modal
@@ -1099,6 +1123,7 @@ export default function ProfileScreen() {
       </Modal>
 
       <Modal visible={changePasswordVisible} transparent animationType="slide" onRequestClose={closeChangePasswordModal}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Şifreni değiştir</Text>
@@ -1111,6 +1136,8 @@ export default function ProfileScreen() {
               secureTextEntry
               placeholderTextColor={colors.mutedForeground}
               testID="current-password-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             <Text style={styles.modalLabel}>Yeni şifre</Text>
             <TextInput
@@ -1121,6 +1148,8 @@ export default function ProfileScreen() {
               placeholder="En az 6 karakter"
               placeholderTextColor={colors.mutedForeground}
               testID="new-password-change-input"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
 
             <View style={styles.modalActions}>
@@ -1133,6 +1162,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
