@@ -22,7 +22,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://paticare-backend.onrender.com/api",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "259953766035-i7t7uga8l4hmvat8755kntk460c6ok2n.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "259953766035-82dsdg073nf2l7ssjsvc8o7g9c5j0vq1.apps.googleusercontent.com"
       }
     },
     "production": {
@@ -34,7 +34,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://paticare-backend.onrender.com/api",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "259953766035-i7t7uga8l4hmvat8755kntk460c6ok2n.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "259953766035-82dsdg073nf2l7ssjsvc8o7g9c5j0vq1.apps.googleusercontent.com"
       }
     }
   },

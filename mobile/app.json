@@ -7,7 +7,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
@@ -17,18 +19,23 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.paticare.mobile",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır."
+        "NSFaceIDUsageDescription": "PatiCare, tekrar giriş yaptığında hesabını hızlıca ve güvenle açman için Face ID kullanır.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "app.paticare.mobile",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7FBF8"
-      }
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "bundler": "metro"
@@ -60,6 +67,11 @@
         }
       ],
       "expo-apple-authentication"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1688acd7-e3da-46c9-b135-762c45fd067e"
+      }
+    }
   }
 }
